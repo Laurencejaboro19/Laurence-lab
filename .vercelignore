@@ -1,0 +1,9 @@
+tests/
+.github/
+Dockerfile
+docker-compose.yml
+render.yaml
+railway.json
+Procfile
+*.db
+bot_state.pickle
