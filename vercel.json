@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python3 scripts/register_webhook.py",
   "functions": {
     "api/*.py": { "maxDuration": 60 }
   },

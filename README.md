@@ -29,6 +29,18 @@ Optional polish in BotFather: `/setuserpic` (logo), `/setdescription`, `/setabou
 
 ## 2. Run the bot
 
+### Option 0 – Already hosted on Vercel (no server needed) ✅
+
+This repo is deployed as serverless functions at **https://laurence-lab-bot.vercel.app** with
+Vercel Blob as the database. To bring it online:
+
+1. In the Vercel project *laurence-lab-bot* → Settings → Environment Variables, add
+   `BOT_TOKEN` (from @BotFather) and `ADMIN_CHAT_IDS` (your Telegram user ID, from `/myid`).
+2. Redeploy. The build step (`scripts/register_webhook.py`) registers the Telegram webhook
+   automatically; the home page shows the live status and the `t.me` link.
+
+Endpoints: `/` status page · `/api/webhook` (Telegram → bot) · `/api/setup` (re-register webhook).
+
 ### Option A – On your own computer (quickest test)
 
 ```bash
