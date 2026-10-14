@@ -1,0 +1,24 @@
+# One-click deploy on Render (https://render.com): New + -> Blueprint -> pick this repo.
+services:
+  - type: worker
+    name: laurence-lab-bot
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m laurence_lab_bot
+    autoDeploy: true
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_CHAT_IDS
+        sync: false
+      - key: DB_PATH
+        value: /data/laurence_lab.db
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.12.6
