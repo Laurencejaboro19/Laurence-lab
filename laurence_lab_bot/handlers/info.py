@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes
 
 from ..formatting import about_text, faq_text, hours_text
 from ..keyboards import cancel_flow_keyboard, info_menu
-from ..restaurant import RESTAURANT
+from ..restaurant import RESTAURANTS
 from .common import respond, set_flow
 
 
@@ -28,8 +28,8 @@ async def cb_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     elif action == "faq":
         await respond(update, faq_text(), info_menu())
     elif action == "location":
-        await respond(update, f"📍 *Find us here*\n{RESTAURANT['address']}", info_menu())
-        await update.effective_chat.send_location(RESTAURANT["latitude"], RESTAURANT["longitude"])
+        text = "📍 *Our restaurants*\n\n" + "\n".join(f"{r.emoji} *{r.name}*\n{r.address}\n" for r in RESTAURANTS)
+        await respond(update, text, info_menu())
     else:
         await respond(update, about_text(), info_menu())
 

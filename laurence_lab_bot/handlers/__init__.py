@@ -11,7 +11,7 @@ from telegram.ext import (
 )
 from telegram import Update
 
-from . import admin, cart, checkout, info, menu, payment, start, support, text, tracking
+from . import admin, cart, checkout, info, menu, payment, start, support, text, tracking, vendor
 from .common import register_admin_by_username
 
 
@@ -41,6 +41,10 @@ def register(app: Application) -> None:
     app.add_handler(CommandHandler("reply", admin.cmd_reply))
     app.add_handler(CommandHandler("inquiries", admin.cmd_inquiries))
     app.add_handler(CommandHandler("stats", admin.cmd_stats))
+    app.add_handler(CommandHandler("vendors", admin.cmd_vendors))
+
+    # Restaurant staff
+    app.add_handler(CommandHandler("vendor", vendor.cmd_vendor))
 
     # Inline button callbacks, by prefix
     app.add_handler(CallbackQueryHandler(start.cb_home, pattern=r"^home$"))
@@ -56,6 +60,7 @@ def register(app: Application) -> None:
     app.add_handler(CallbackQueryHandler(tracking.cb_track, pattern=r"^track:"))
     app.add_handler(CallbackQueryHandler(support.cb_support_start, pattern=r"^support:start$"))
     app.add_handler(CallbackQueryHandler(admin.cb_admin, pattern=r"^admin:"))
+    app.add_handler(CallbackQueryHandler(vendor.cb_vendor, pattern=r"^vendor:"))
 
     # Telegram native payments
     app.add_handler(PreCheckoutQueryHandler(payment.precheckout))

@@ -14,8 +14,8 @@ from ..keyboards import (
     payment_methods_keyboard,
 )
 from ..payments import available_payment_options
-from ..restaurant import DELIVERY, MENU_BY_ID
-from .common import cart, clear_flow, currency, flow_data, respond, set_flow, settings, storage
+from ..restaurant import DELIVERY, MENU_BY_ID, get_restaurant
+from .common import cart, cart_restaurant_id, clear_flow, currency, flow_data, respond, set_flow, settings, storage
 
 
 def _checkout(context: ContextTypes.DEFAULT_TYPE) -> dict:
@@ -26,12 +26,14 @@ async def start_checkout(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not cart(context):
         await respond(update, "🛒 Your cart is empty. Add something from the menu first.", fulfilment_menu())
         return
-    context.user_data["checkout"] = {}
+    context.user_data["checkout"] = {"restaurant_id": cart_restaurant_id(context)}
     clear_flow(context)
     lines, subtotal = cart_lines(cart(context), currency(context))
+    r = get_restaurant(cart_restaurant_id(context))
+    closed = "" if (r and r.is_open_now()) else f"\n⚠️ {r.name if r else 'The restaurant'} is closed right now; this will be a pre-order.\n"
     await respond(
         update,
-        f"🧾 *Checkout*\n\n{lines}\n\nSubtotal: *{money(subtotal, currency(context))}*\n\n"
+        f"🧾 *Checkout* — {r.emoji + ' ' + r.name if r else ''}\n\n{lines}\n\nSubtotal: *{money(subtotal, currency(context))}*\n{closed}\n"
         "How would you like to get your order?",
         fulfilment_menu(),
     )
@@ -74,11 +76,12 @@ async def cb_checkout(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 async def handle_address(update: Update, context: ContextTypes.DEFAULT_TYPE, *, address: str | None = None,
                          lat: float | None = None, lon: float | None = None) -> None:
     _, subtotal = cart_lines(cart(context), currency(context))
+    rid = cart_restaurant_id(context)
     if lat is not None and lon is not None:
-        quote = quote_by_coordinates(lat, lon, subtotal)
+        quote = quote_by_coordinates(lat, lon, subtotal, rid)
         address_text = address or f"Shared location ({lat:.5f}, {lon:.5f})"
     else:
-        quote = quote_by_address(address or "", subtotal)
+        quote = quote_by_address(address or "", subtotal, rid)
         address_text = address or ""
     if not quote.deliverable:
         await update.message.reply_text(
@@ -170,6 +173,7 @@ async def place_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     ]
     subtotal = sum(line["price"] * line["qty"] for line in order_items)
     order = storage(context).create_order(
+        restaurant_id=co.get("restaurant_id") or cart_restaurant_id(context) or "ll",
         user_id=user.id,
         chat_id=chat.id,
         customer_name=co.get("name") or user.full_name,
@@ -187,6 +191,7 @@ async def place_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         notes=co.get("note", ""),
     )
     items.clear()
+    context.user_data.pop("cart_restaurant", None)
     context.user_data.pop("checkout", None)
     context.user_data["last_order_id"] = order.id
     options = available_payment_options(settings(context))

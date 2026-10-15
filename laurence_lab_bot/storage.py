@@ -45,6 +45,7 @@ def _new_order_id() -> str:
 @dataclass
 class Order:
     id: str
+    restaurant_id: str
     user_id: int
     chat_id: int
     customer_name: str
@@ -70,6 +71,7 @@ class Order:
     def from_row(cls, row: sqlite3.Row) -> "Order":
         data = dict(row)
         data["items"] = json.loads(data["items"])
+        data.setdefault("restaurant_id", "ll")
         return cls(**data)
 
 
@@ -85,6 +87,7 @@ class Storage:
             """
             CREATE TABLE IF NOT EXISTS orders (
                 id TEXT PRIMARY KEY,
+                restaurant_id TEXT DEFAULT 'll',
                 user_id INTEGER NOT NULL,
                 chat_id INTEGER NOT NULL,
                 customer_name TEXT DEFAULT '',
@@ -138,6 +141,14 @@ class Storage:
                 created_at TEXT NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS vendors (
+                user_id INTEGER PRIMARY KEY,
+                restaurant_id TEXT NOT NULL,
+                username TEXT,
+                chat_id INTEGER,
+                created_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS customers (
                 user_id INTEGER PRIMARY KEY,
                 name TEXT,
@@ -148,6 +159,10 @@ class Storage:
             """
         )
         self.conn.commit()
+        cols = {r["name"] for r in self.conn.execute("PRAGMA table_info(orders)").fetchall()}
+        if "restaurant_id" not in cols:  # migrate databases created before partner restaurants existed
+            self.conn.execute("ALTER TABLE orders ADD COLUMN restaurant_id TEXT DEFAULT 'll'")
+            self.conn.commit()
 
     # ------------------------------------------------------------------ orders
     def create_order(self, **fields: Any) -> Order:
@@ -162,12 +177,13 @@ class Storage:
         fields.setdefault("eta_minutes", 0)
         fields.setdefault("latitude", None)
         fields.setdefault("longitude", None)
+        fields.setdefault("restaurant_id", "ll")
         self.conn.execute(
             """
-            INSERT INTO orders (id, user_id, chat_id, customer_name, phone, items, subtotal, delivery_fee,
+            INSERT INTO orders (id, restaurant_id, user_id, chat_id, customer_name, phone, items, subtotal, delivery_fee,
                 total, fulfilment, address, latitude, longitude, payment_method, payment_status, payment_ref,
                 status, eta_minutes, notes, created_at, updated_at)
-            VALUES (:id, :user_id, :chat_id, :customer_name, :phone, :items, :subtotal, :delivery_fee,
+            VALUES (:id, :restaurant_id, :user_id, :chat_id, :customer_name, :phone, :items, :subtotal, :delivery_fee,
                 :total, :fulfilment, :address, :latitude, :longitude, :payment_method, :payment_status,
                 :payment_ref, :status, :eta_minutes, :notes, :created_at, :updated_at)
             """,
@@ -203,12 +219,22 @@ class Storage:
             rows = self.conn.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
         return [Order.from_row(r) for r in rows]
 
-    def active_orders(self, limit: int = 50) -> list[Order]:
-        rows = self.conn.execute(
-            "SELECT * FROM orders WHERE status NOT IN ('delivered', 'cancelled') ORDER BY created_at ASC LIMIT ?",
-            (limit,),
-        ).fetchall()
+    def active_orders(self, limit: int = 50, restaurant_id: str | None = None) -> list[Order]:
+        if restaurant_id:
+            rows = self.conn.execute(
+                "SELECT * FROM orders WHERE status NOT IN ('delivered', 'cancelled') AND restaurant_id = ? "
+                "ORDER BY created_at ASC LIMIT ?", (restaurant_id, limit),
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT * FROM orders WHERE status NOT IN ('delivered', 'cancelled') ORDER BY created_at ASC LIMIT ?",
+                (limit,),
+            ).fetchall()
         return [Order.from_row(r) for r in rows]
+
+    def order_by_payment_ref(self, reference: str) -> Order | None:
+        row = self.conn.execute("SELECT * FROM orders WHERE payment_ref = ?", (reference,)).fetchone()
+        return Order.from_row(row) if row else None
 
     def update_order(self, order_id: str, **fields: Any) -> Order | None:
         if not fields:
@@ -250,6 +276,26 @@ class Storage:
 
     def admin_ids(self) -> set[int]:
         return {r["user_id"] for r in self.conn.execute("SELECT user_id FROM admins").fetchall()}
+
+    # ----------------------------------------------------------------- vendors
+    def register_vendor(self, user_id: int, restaurant_id: str, username: str = "", chat_id: int | None = None) -> None:
+        self.conn.execute(
+            "INSERT OR REPLACE INTO vendors (user_id, restaurant_id, username, chat_id, created_at) VALUES (?,?,?,?,?)",
+            (user_id, restaurant_id, username, chat_id or user_id, _now()),
+        )
+        self.conn.commit()
+
+    def unregister_vendor(self, user_id: int) -> None:
+        self.conn.execute("DELETE FROM vendors WHERE user_id = ?", (user_id,))
+        self.conn.commit()
+
+    def vendor_restaurant(self, user_id: int) -> str | None:
+        row = self.conn.execute("SELECT restaurant_id FROM vendors WHERE user_id = ?", (user_id,)).fetchone()
+        return row["restaurant_id"] if row else None
+
+    def vendor_chat_ids(self, restaurant_id: str) -> list[int]:
+        rows = self.conn.execute("SELECT chat_id FROM vendors WHERE restaurant_id = ?", (restaurant_id,)).fetchall()
+        return [r["chat_id"] for r in rows]
 
     # --------------------------------------------------------------- customers
     def remember_customer(self, user_id: int, **fields: Any) -> None:

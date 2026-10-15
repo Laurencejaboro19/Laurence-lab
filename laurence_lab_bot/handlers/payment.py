@@ -6,19 +6,45 @@ from telegram import LabeledPrice, Update
 from telegram.ext import ContextTypes
 
 from ..formatting import money, order_summary
-from ..keyboards import admin_order_keyboard, after_order_keyboard, payment_methods_keyboard, paystack_keyboard, transfer_keyboard
+from ..keyboards import (admin_order_keyboard, after_order_keyboard, payment_methods_keyboard, paystack_keyboard,
+                         transfer_keyboard, vendor_order_keyboard)
 from ..payments import PaystackClient, available_payment_options, bank_transfer_text, paystack_reference
-from .common import currency, notify_admins, respond, settings, storage
+from ..restaurant import get_restaurant
+from .common import currency, notify_admins, notify_restaurant, notify_user, respond, settings, storage
 
 log = logging.getLogger(__name__)
 
 
-async def _announce_new_order(context: ContextTypes.DEFAULT_TYPE, order) -> None:
-    await notify_admins(
-        context,
-        "🔔 *New order!*\n\n" + order_summary(order, currency(context), for_admin=True),
-        admin_order_keyboard(order),
-    )
+async def announce_new_order(context: ContextTypes.DEFAULT_TYPE, order) -> None:
+    """Relay a confirmed order to the restaurant's staff, with the admins in copy."""
+    summary = order_summary(order, currency(context), for_admin=True)
+    delivered_to = await notify_restaurant(context, order, "🔔 *New order for your kitchen!*\n\n" + summary
+                                           + "\n\nPlease *accept* within a few minutes.", vendor_order_keyboard(order))
+    rest = get_restaurant(order.restaurant_id)
+    note = "" if delivered_to else (f"\n⚠️ No staff of *{rest.name if rest else order.restaurant_id}* is linked on Telegram yet. "
+                                    f"Share the vendor code with them (`/vendor <code>`) or handle this order yourself.")
+    await notify_admins(context, "🔔 *New order!*" + (f" (sent to {delivered_to} restaurant staff)" if delivered_to else "")
+                        + "\n\n" + summary + note, admin_order_keyboard(order))
+
+
+_announce_new_order = announce_new_order
+
+
+async def mark_paid_and_announce(context: ContextTypes.DEFAULT_TYPE, order_id: str, *, reference: str | None = None) -> None:
+    """Used by the Paystack webhook and the manual verify button."""
+    db = storage(context)
+    order = db.get_order(order_id)
+    if order is None:
+        return
+    if order.payment_status == "paid":
+        return  # idempotent: webhook + manual verify may both fire
+    fields = {"payment_status": "paid"}
+    if reference:
+        fields["payment_ref"] = reference
+    order = db.update_order(order.id, **fields)
+    await notify_user(context, order.chat_id, "✅ Payment confirmed! Your order is now with the kitchen.\n\n"
+                      + order_summary(order, currency(context)), after_order_keyboard(order.id))
+    await announce_new_order(context, order)
 
 
 async def cb_pay(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -64,9 +90,10 @@ async def cb_pay(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reference = paystack_reference(order.id, attempt)
         email = f"tg{user.id}@customers.laurencelab.ng"
         try:
-            url = await PaystackClient(cfg.paystack_secret_key).initialize(
+            url = await PaystackClient(cfg.paystack_secret_key).initialize_with_url(
                 email=email, amount_naira=order.total, reference=reference,
                 metadata={"order_id": order.id, "telegram_user_id": user.id},
+                callback_url=f"https://t.me/{(await context.bot.get_me()).username}",
             )
         except Exception as exc:  # network / API error
             log.exception("Paystack init failed")
@@ -87,10 +114,13 @@ async def cb_pay(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         except Exception:
             log.exception("Paystack verify failed")
         if ok:
-            order = db.update_order(order.id, payment_status="paid")
-            await respond(update, "✅ Payment confirmed! Your order is now with the kitchen.\n\n" + order_summary(order, cur),
-                          after_order_keyboard(order.id))
-            await _announce_new_order(context, order)
+            if order.payment_status == "paid":  # webhook already handled it
+                await respond(update, "✅ Payment already confirmed.\n\n" + order_summary(order, cur), after_order_keyboard(order.id))
+            else:
+                await mark_paid_and_announce(context, order.id)
+                order = db.get_order(order.id)
+                await respond(update, "✅ Payment confirmed! Your order is now with the kitchen.\n\n" + order_summary(order, cur),
+                              after_order_keyboard(order.id))
         else:
             await respond(update, "⏳ We haven't seen the payment yet. If you've paid, wait a moment and tap "
                           "*I've completed payment* again.", paystack_keyboard_from_order(order))

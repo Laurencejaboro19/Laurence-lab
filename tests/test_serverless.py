@@ -173,7 +173,7 @@ async def test_serverless_conversation_persists_between_invocations(blob):
 
     await process_update(_msg(42, "2 jollof and 1 chicken", 2), storage=storage(), request=tg)
     assert "Here's what I understood" in tg.sent[-1]["text"]
-    assert BlobStorage(BlobKV("test-token", transport=httpx.MockTransport(blob.handler))).load_user_state(42)["pending_order"] == {"jollof": 2, "chicken": 1}
+    assert BlobStorage(BlobKV("test-token", transport=httpx.MockTransport(blob.handler))).load_user_state(42)["pending_order"] == {"ll_jollof": 2, "ll_chicken": 1}
 
     await process_update(_cb(42, "nlp:accept:checkout", 3), storage=storage(), request=tg)
     assert "Checkout" in tg.sent[-1]["text"]

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 from dataclasses import dataclass
 
 import httpx
@@ -46,6 +48,24 @@ class PaystackClient:
     def __init__(self, secret_key: str) -> None:
         self._headers = {"Authorization": f"Bearer {secret_key}", "Content-Type": "application/json"}
 
+    async def initialize_with_url(self, *, email: str, amount_naira: int, reference: str, metadata: dict | None = None,
+                                  callback_url: str | None = None) -> str:
+        payload = {
+            "email": email,
+            "amount": int(amount_naira) * 100,
+            "reference": reference,
+            "currency": "NGN",
+            "metadata": metadata or {},
+        }
+        if callback_url:
+            payload["callback_url"] = callback_url
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(f"{PAYSTACK_BASE}/transaction/initialize", json=payload, headers=self._headers)
+        data = resp.json()
+        if resp.status_code >= 400 or not data.get("status"):
+            raise RuntimeError(data.get("message", "Paystack initialisation failed"))
+        return data["data"]["authorization_url"]
+
     async def initialize(self, *, email: str, amount_naira: int, reference: str, metadata: dict | None = None) -> str:
         """Create a Paystack transaction and return the hosted checkout URL."""
         payload = {
@@ -71,3 +91,15 @@ class PaystackClient:
 
 def paystack_reference(order_id: str, attempt: int) -> str:
     return f"{order_id}-{attempt}".replace("-", "_")
+
+
+def order_id_from_reference(reference: str) -> str | None:
+    """'LL_AB12CD_3' -> 'LL-AB12CD'."""
+    parts = (reference or "").split("_")
+    return f"{parts[0]}-{parts[1]}" if len(parts) >= 2 and parts[0] == "LL" else None
+
+
+def verify_paystack_signature(secret_key: str, raw_body: bytes, signature: str) -> bool:
+    """Paystack signs webhooks with HMAC-SHA512 of the raw body using your secret key."""
+    expected = hmac.new(secret_key.encode(), raw_body, hashlib.sha512).hexdigest()
+    return hmac.compare_digest(expected, (signature or "").strip())

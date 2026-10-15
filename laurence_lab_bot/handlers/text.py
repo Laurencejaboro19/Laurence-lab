@@ -9,7 +9,7 @@ from ..formatting import md, money
 from ..keyboards import cancel_flow_keyboard, home_button, main_menu, parsed_order_actions
 from ..nlp import looks_like_order, parse_order
 from . import checkout, support, tracking
-from .common import cart_count, clear_flow, currency, flow, flow_data, notify_admins, respond, storage
+from .common import cart_count, cart_restaurant_id, clear_flow, currency, flow, flow_data, notify_admins, respond, storage
 
 
 async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -85,20 +85,26 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await tracking.show_order(update, context, oid)
         return
     if looks_like_order(text):
-        parsed = parse_order(text)
+        parsed = parse_order(text, cart_restaurant_id(context))
         if not parsed.is_empty:
             cur = currency(context)
             context.user_data["pending_order"] = {item.id: qty for item, qty in parsed.lines}
             lines = "\n".join(f"{item.emoji} {qty} × {item.name} — {money(item.price * qty, cur)}" for item, qty in parsed.lines)
             subtotal = sum(item.price * qty for item, qty in parsed.lines)
-            reply = f"Here's what I understood:\n\n{lines}\n\n*Subtotal: {money(subtotal, cur)}*"
+            r = parsed.restaurant
+            reply = f"Here's what I understood — from *{r.emoji} {r.name}*:\n\n{lines}\n\n*Subtotal: {money(subtotal, cur)}*"
+            if parsed.other_restaurants:
+                reply += "\n\n_Also available at " + md(", ".join(parsed.other_restaurants)) + ". Mention the restaurant name to pick it._"
             if parsed.unmatched:
                 reply += "\n\n🤔 I couldn't match: _" + md(", ".join(parsed.unmatched)) + "_. You can add those from the menu."
+            current = cart_restaurant_id(context)
+            if current and current != r.id:
+                reply += "\n\n⚠️ This replaces your current cart (one restaurant per order)."
             await update.message.reply_text(reply, reply_markup=parsed_order_actions(), parse_mode="Markdown")
             return
     await update.message.reply_text(
         "I'm not sure what you mean 🤔 Use the buttons below, or type an order like "
-        "_\"2 jollof and 1 chicken\"_.",
+        "_\"2 jollof and 1 chicken\"_ or _\"chicken shawarma and fries\"_.",
         reply_markup=main_menu(cart_count(context)),
         parse_mode="Markdown",
     )

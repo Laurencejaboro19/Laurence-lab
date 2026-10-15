@@ -91,11 +91,14 @@ async def cb_track(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 def status_message(order) -> str:
     label = STATUS_LABELS.get(order.status, order.status)
     extra = {
-        "confirmed": "We've confirmed your order and the kitchen is on it.",
+        "received": "Waiting for the restaurant to accept your order.",
+        "confirmed": "The restaurant accepted your order and the kitchen is on it.",
         "preparing": "Your food is being prepared right now 🔥",
         "out_for_delivery": f"Our rider is on the way! ETA ~{order.eta_minutes} min." if order.eta_minutes else "Our rider is on the way!",
         "ready_for_pickup": "Your order is ready — come and grab it!",
         "delivered": "Enjoy your meal! Thanks for ordering from Laurence Lab 🙏",
         "cancelled": "This order has been cancelled. Contact support if this is unexpected.",
     }.get(order.status, "")
+    if order.status == "cancelled" and order.notes.startswith("Rejected by restaurant"):
+        extra = f"😔 {order.notes}. You haven't been charged; if you already paid, support will refund you."
     return f"📦 Order *{order.id}* — {label}\n{extra}"

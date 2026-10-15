@@ -5,14 +5,14 @@ from telegram.ext import ContextTypes
 
 from ..formatting import md
 from ..keyboards import main_menu
-from ..restaurant import RESTAURANT
+from ..restaurant import PLATFORM
 from .common import cart_count, clear_flow, is_admin, respond
 
 
 def welcome_text(first_name: str) -> str:
     return (
-        f"Hey {md(first_name)}! Welcome to *{RESTAURANT['name']}* 🍔\n\n"
-        f"{RESTAURANT['tagline']} Choose an option below or just tell me what you'd like to order, e.g.\n"
+        f"Hey {md(first_name)}! Welcome to *{PLATFORM['name']}* 🍔\n\n"
+        f"{PLATFORM['tagline']} Choose an option below or just tell me what you'd like to order, e.g.\n"
         "_\"2 portions of jollof, 1 chicken and a bottle water\"_"
     )
 
@@ -49,6 +49,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "You can also type your order in plain English, e.g. "
         "_\"4 portions of jollof, 1 chicken, 1 chivita, 2 plantain and bottle water\"_."
     )
+    text += "\n\n*Restaurant staff:* /vendor <code> to receive your kitchen's orders here."
     if update.effective_user and is_admin(context, update.effective_user.id):
         text += "\n\n*Admin*\n/admin – admin help"
     await respond(update, text, main_menu(cart_count(context)))

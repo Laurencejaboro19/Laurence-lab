@@ -64,6 +64,39 @@ def cart_count(context: ContextTypes.DEFAULT_TYPE) -> int:
     return sum(cart(context).values())
 
 
+def cart_restaurant_id(context: ContextTypes.DEFAULT_TYPE) -> str | None:
+    """The restaurant the cart belongs to (a cart holds items from one restaurant only)."""
+    items = cart(context)
+    if not items:
+        context.user_data.pop("cart_restaurant", None)
+        return None
+    rid = context.user_data.get("cart_restaurant")
+    if not rid:
+        from ..restaurant import MENU_BY_ID
+        first = MENU_BY_ID.get(next(iter(items)))
+        rid = first.restaurant_id if first else None
+        if rid:
+            context.user_data["cart_restaurant"] = rid
+    return rid
+
+
+def add_to_cart(context: ContextTypes.DEFAULT_TYPE, item_id: str, qty: int, *, replace: bool = False) -> str | None:
+    """Add an item. Returns the name of a conflicting restaurant if the cart belongs to another one."""
+    from ..restaurant import MENU_BY_ID, get_restaurant
+    item = MENU_BY_ID.get(item_id)
+    if item is None:
+        return None
+    items = cart(context)
+    current = cart_restaurant_id(context)
+    if current and current != item.restaurant_id:
+        if not replace:
+            return get_restaurant(current).name
+        items.clear()
+    items[item_id] = min(99, items.get(item_id, 0) + qty)
+    context.user_data["cart_restaurant"] = item.restaurant_id
+    return None
+
+
 def set_flow(context: ContextTypes.DEFAULT_TYPE, name: str | None, **data: Any) -> None:
     if name is None:
         context.user_data.pop("flow", None)
@@ -118,6 +151,32 @@ async def notify_admins(
             await context.bot.send_message(admin_id, text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         except (Forbidden, BadRequest) as exc:
             log.warning("Could not notify admin %s: %s", admin_id, exc)
+
+
+async def notify_restaurant(context: ContextTypes.DEFAULT_TYPE, order, text: str, markup=None) -> int:
+    """Send an order to the restaurant's registered staff on Telegram (and by email as fallback).
+
+    Returns how many Telegram chats received it.
+    """
+    from ..emailer import email_enabled, send_email
+    from ..restaurant import get_restaurant
+
+    sent = 0
+    for chat_id in storage(context).vendor_chat_ids(order.restaurant_id):
+        try:
+            await context.bot.send_message(chat_id, text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
+            sent += 1
+        except (Forbidden, BadRequest) as exc:
+            log.warning("Could not notify vendor chat %s: %s", chat_id, exc)
+    rest = get_restaurant(order.restaurant_id)
+    if rest and rest.email and email_enabled():
+        plain = text.replace("*", "").replace("`", "").replace("_", "")
+        send_email(rest.email, f"New order {order.id} – {rest.name}", plain)
+    return sent
+
+
+def is_vendor_for(context: ContextTypes.DEFAULT_TYPE, user_id: int, restaurant_id: str) -> bool:
+    return storage(context).vendor_restaurant(user_id) == restaurant_id
 
 
 async def notify_user(context: ContextTypes.DEFAULT_TYPE, chat_id: int, text: str, markup=None) -> bool:

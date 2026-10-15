@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 
-from .restaurant import RESTAURANT
+from .restaurant import PLATFORM, RESTAURANT, RESTAURANTS, get_restaurant
 from .storage import STATUS_LABELS, Order
 
 
@@ -57,8 +57,10 @@ def order_summary(order: Order, currency: str, *, for_admin: bool = False) -> st
         "transfer": "Bank transfer",
         "cod": "Pay on delivery",
     }.get(order.payment_method, order.payment_method or "—")
+    rest = get_restaurant(order.restaurant_id)
     parts = [
         f"🧾 *Order {order.id}*",
+        f"🏪 {rest.emoji} {rest.name}" if rest else "",
         "",
         order_items_text(order, currency),
         "",
@@ -110,22 +112,37 @@ def _fmt_time(iso: str) -> str:
 
 
 def about_text() -> str:
-    r = RESTAURANT
+    p = PLATFORM
+    rests = "\n".join(f"{r.emoji} *{r.name}* — {r.cuisine} ({'open now' if r.is_open_now() else 'closed now'})"
+                      for r in RESTAURANTS)
     return (
-        f"🍽️ *{r['name']}*\n_{r['tagline']}_\n\n{r['description']}\n\n"
-        f"📍 {r['address']}\n📞 {r['phone']}\n✉️ {r['email']}\n🌐 {r['website']}\n📸 {r['instagram']}"
+        f"🍽️ *{p['name']}*\n_{p['tagline']}_\n\n{p['description']}\n\n*Partner restaurants:*\n{rests}\n\n"
+        f"📞 Support: {p['support_phone']}\n✉️ {p['support_email']}\n🌐 {p['website']}\n📸 {p['instagram']}"
     )
 
 
 def hours_text() -> str:
-    lines = [f"🕒 *Opening hours — {RESTAURANT['name']}*", ""]
-    for day, hrs in RESTAURANT["opening_hours"].items():
-        lines.append(f"*{day}:* {hrs}")
-    return "\n".join(lines)
+    lines = ["🕒 *Opening hours*", ""]
+    for r in RESTAURANTS:
+        lines.append(f"{r.emoji} *{r.name}* — {'🟢 open now' if r.is_open_now() else '🔴 closed now'}")
+        lines.append(r.hours_text())
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def restaurant_text(restaurant_id: str) -> str:
+    r = get_restaurant(restaurant_id)
+    if not r:
+        return "Restaurant not found."
+    return (
+        f"{r.emoji} *{r.name}*\n_{r.tagline}_\n{r.cuisine}\n\n"
+        f"{'🟢 Open now' if r.is_open_now() else '🔴 Closed now (you can still pre-order)'}\n\n"
+        f"📍 {r.address}\n📞 {r.phone}\n\n{r.hours_text()}"
+    )
 
 
 def faq_text() -> str:
     lines = ["❓ *Frequently asked questions*", ""]
-    for q, a in RESTAURANT["faq"]:
+    for q, a in PLATFORM["faq"]:
         lines.append(f"*{q}*\n{a}\n")
     return "\n".join(lines).strip()

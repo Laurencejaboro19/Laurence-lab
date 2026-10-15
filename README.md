@@ -4,10 +4,11 @@ A production-ready Telegram bot that automates a restaurant's customer conversat
 
 | Area | What the bot does |
 |---|---|
+| **Partner restaurants** | Several restaurants, each with its own menu, location, hours and **staff chat**: the bot relays every order straight to that restaurant's staff on Telegram (Accept / Reject / Preparing / Out for delivery buttons) with an email fallback, and tells the customer at each step |
 | **Business inquiries** | About Us, opening hours, location pin, FAQ, and a guided *Business Inquiries* form (catering, bulk orders, partnerships) that is saved and pushed to staff |
 | **Food ordering** | Browse menu by category, quantity picker, cart management, **and plain-English ordering** – e.g. *"4 portions of jollof, 1 chicken, 1 chivita, 2 plantain and bottle water"* is parsed into a cart automatically |
 | **Shipping / delivery** | Delivery or pickup; GPS location sharing with distance-based pricing (base fee + per-km), typed-address zone pricing, max delivery radius, free delivery above a threshold, ETA estimate |
-| **Payment** | Pay on delivery, bank transfer (with "I have paid" + staff confirmation), **Paystack online checkout** (card/transfer/USSD) and **Telegram native payments** – online methods switch on automatically when their keys are configured |
+| **Payment** | Pay on delivery, bank transfer (with "I have paid" + staff confirmation), **Paystack online checkout** (card/transfer/USSD) confirmed **automatically by webhook**, and **Telegram native payments** – online methods switch on automatically when their keys are configured |
 | **Order tracking** | Unique order IDs (`LL-AB12CD`), live status timeline (Received → Confirmed → Preparing → Out for delivery → Delivered), push notifications to the customer on every status change, order history, customer-side cancellation |
 | **Support** | "Speak to Support" tickets forwarded to staff; staff reply from Telegram with `/reply` |
 | **Staff / admin** | New orders, payments, tickets and inquiries pushed to admins with one-tap status buttons; `/queue`, `/order`, `/setstatus`, `/confirmpay`, `/inquiries`, `/stats` |
@@ -94,6 +95,25 @@ Edit **`laurence_lab_bot/restaurant.py`** – it's plain Python data:
 - `DELIVERY` – base fee, per-km fee, free km, max radius, free-delivery threshold, flat zone fees, prep time.
 
 No code changes needed; restart the bot after editing.
+
+## 3b. Partner restaurants (vendors)
+
+Each restaurant in `laurence_lab_bot/restaurant.py` has a `vendor_code`. Override it in production with
+`VENDOR_CODE_<ID>` env vars (e.g. `VENDOR_CODE_GH`) so the public repo never exposes a real code.
+
+Restaurant staff link themselves once by sending the bot `/vendor <code>`; from then on every order for that
+restaurant lands in their Telegram with Accept / Reject and status buttons. `/queue` shows their active orders,
+`/vendor off` unlinks. Admins see all codes and linked staff with `/vendors`. If a restaurant has no linked staff,
+the admins get the order with a warning, and if SMTP is configured the restaurant also receives it by email.
+
+Email fallback env vars: `SMTP_HOST`, `SMTP_PORT` (587/465), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`.
+
+### Automatic online payment (Paystack)
+
+1. Set `PAYSTACK_SECRET_KEY` (Dashboard → Settings → API Keys & Webhooks).
+2. In the same page set the **Webhook URL** to `https://laurence-lab-bot.vercel.app/api/paystack`.
+3. Done: when a customer pays, Paystack calls the webhook, the bot verifies the signature, marks the order paid,
+   tells the customer and relays the order to the restaurant. No one has to tap anything.
 
 ## 4. Customer commands
 

@@ -138,6 +138,8 @@ class BlobStorage:
 
     @staticmethod
     def _to_order(data: dict[str, Any]) -> Order:
+        data = dict(data)
+        data.setdefault("restaurant_id", "ll")
         return Order(**data)
 
     # -- orders ------------------------------------------------------------
@@ -148,6 +150,7 @@ class BlobStorage:
             order_id = _new_order_id()
         data = {
             "id": order_id,
+            "restaurant_id": fields.get("restaurant_id", "ll"),
             "user_id": fields["user_id"],
             "chat_id": fields["chat_id"],
             "customer_name": fields.get("customer_name", ""),
@@ -187,10 +190,17 @@ class BlobStorage:
             rows = [r for r in rows if r.get("status") == status]
         return [self._to_order(r) for r in rows[:limit]]
 
-    def active_orders(self, limit: int = 50) -> list[Order]:
-        rows = [r for r in self._index("orders") if r.get("status") not in ("delivered", "cancelled")]
+    def active_orders(self, limit: int = 50, restaurant_id: str | None = None) -> list[Order]:
+        rows = [r for r in self._index("orders") if r.get("status") not in ("delivered", "cancelled")
+                and (restaurant_id is None or r.get("restaurant_id", "ll") == restaurant_id)]
         rows.sort(key=lambda r: r.get("created_at", ""))
         return [self._to_order(r) for r in rows[:limit]]
+
+    def order_by_payment_ref(self, reference: str) -> Order | None:
+        for r in self._index("orders"):
+            if r.get("payment_ref") == reference:
+                return self.get_order(r["id"])
+        return None
 
     def update_order(self, order_id: str, **fields: Any) -> Order | None:
         data = self.kv.get(f"orders/{order_id.upper().strip()}")
@@ -233,6 +243,26 @@ class BlobStorage:
 
     def admin_ids(self) -> set[int]:
         return {r["user_id"] for r in self._index("admins")}
+
+    # -- vendors -----------------------------------------------------------
+    def register_vendor(self, user_id: int, restaurant_id: str, username: str = "", chat_id: int | None = None) -> None:
+        rows = [r for r in self._index("vendors") if r.get("user_id") != user_id]
+        rows.append({"user_id": user_id, "restaurant_id": restaurant_id, "username": username,
+                     "chat_id": chat_id or user_id, "created_at": _now()})
+        self._save_index("vendors", rows)
+
+    def unregister_vendor(self, user_id: int) -> None:
+        rows = [r for r in self._index("vendors") if r.get("user_id") != user_id]
+        self._save_index("vendors", rows)
+
+    def vendor_restaurant(self, user_id: int) -> str | None:
+        for r in self._index("vendors"):
+            if r.get("user_id") == user_id:
+                return r.get("restaurant_id")
+        return None
+
+    def vendor_chat_ids(self, restaurant_id: str) -> list[int]:
+        return [r["chat_id"] for r in self._index("vendors") if r.get("restaurant_id") == restaurant_id]
 
     # -- customers ---------------------------------------------------------
     def remember_customer(self, user_id: int, **fields: Any) -> None:

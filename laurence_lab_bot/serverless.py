@@ -162,3 +162,36 @@ async def status() -> dict[str, Any]:
         "admins_configured": len(settings.admin_chat_ids),
         "blob_storage": bool(os.getenv("BLOB_READ_WRITE_TOKEN")),
     }
+
+
+async def handle_paystack_event(event: dict[str, Any]) -> dict[str, Any]:
+    """Called by /api/paystack after signature verification. Confirms payment and relays the order."""
+    from types import SimpleNamespace
+
+    from .handlers.payment import mark_paid_and_announce
+    from .payments import order_id_from_reference
+
+    kind = event.get("event", "")
+    data = event.get("data") or {}
+    reference = data.get("reference", "")
+    if kind != "charge.success" or data.get("status") != "success":
+        return {"ok": True, "ignored": kind}
+    order_id = (data.get("metadata") or {}).get("order_id") or order_id_from_reference(reference)
+    if not order_id:
+        return {"ok": True, "ignored": "no order id in reference"}
+    settings = load_settings()
+    storage = make_storage(settings)
+    app = build_application(settings=settings, storage=storage, persistence=None, post_init=None)
+    try:
+        async with app:
+            order = storage.get_order(order_id)
+            if order is None:
+                return {"ok": True, "ignored": f"unknown order {order_id}"}
+            paid_kobo = int(data.get("amount") or 0)
+            if paid_kobo < order.total * 100:
+                return {"ok": True, "ignored": f"amount {paid_kobo} below order total"}
+            ctx = SimpleNamespace(bot=app.bot, bot_data=app.bot_data, user_data={})
+            await mark_paid_and_announce(ctx, order.id, reference=reference)
+            return {"ok": True, "order": order.id, "paid": True}
+    finally:
+        storage.close()
