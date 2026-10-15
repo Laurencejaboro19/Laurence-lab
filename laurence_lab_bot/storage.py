@@ -131,6 +131,13 @@ class Storage:
                 created_at TEXT NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS admins (
+                user_id INTEGER PRIMARY KEY,
+                username TEXT,
+                chat_id INTEGER,
+                created_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS customers (
                 user_id INTEGER PRIMARY KEY,
                 name TEXT,
@@ -232,6 +239,17 @@ class Storage:
             "inquiries": self.conn.execute("SELECT COUNT(*) FROM inquiries").fetchone()[0],
             "open_tickets": self.conn.execute("SELECT COUNT(*) FROM tickets WHERE status = 'open'").fetchone()[0],
         }
+
+    # ------------------------------------------------------------------ admins
+    def register_admin(self, user_id: int, username: str = "", chat_id: int | None = None) -> None:
+        self.conn.execute(
+            "INSERT OR REPLACE INTO admins (user_id, username, chat_id, created_at) VALUES (?,?,?,?)",
+            (user_id, username, chat_id or user_id, _now()),
+        )
+        self.conn.commit()
+
+    def admin_ids(self) -> set[int]:
+        return {r["user_id"] for r in self.conn.execute("SELECT user_id FROM admins").fetchall()}
 
     # --------------------------------------------------------------- customers
     def remember_customer(self, user_id: int, **fields: Any) -> None:

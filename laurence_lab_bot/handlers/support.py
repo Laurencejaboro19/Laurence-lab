@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 from ..formatting import md
 from ..keyboards import cancel_flow_keyboard, home_button
 from ..restaurant import RESTAURANT
-from .common import clear_flow, notify_admins, respond, set_flow, settings, storage
+from .common import all_admin_ids, clear_flow, notify_admins, respond, set_flow, storage
 
 
 async def cmd_support(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -34,7 +34,7 @@ async def handle_support_message(update: Update, context: ContextTypes.DEFAULT_T
     db = storage(context)
     ticket_id = db.create_ticket(user.id, chat.id, user.username or "", text)
     clear_flow(context)
-    if settings(context).admin_chat_ids:
+    if all_admin_ids(context):
         handle = f"@{user.username}" if user.username else "no username"
         await notify_admins(
             context,

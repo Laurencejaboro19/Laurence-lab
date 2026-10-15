@@ -26,6 +26,7 @@ def _parse_ids(raw: str) -> tuple[int, ...]:
 class Settings:
     bot_token: str
     admin_chat_ids: tuple[int, ...]
+    admin_usernames: tuple[str, ...]
     db_path: str
     currency: str
     bank_name: str
@@ -55,6 +56,9 @@ def load_settings() -> Settings:
     return Settings(
         bot_token=token,
         admin_chat_ids=_parse_ids(os.getenv("ADMIN_CHAT_IDS", "")),
+        admin_usernames=tuple(
+            u.strip().lstrip("@").lower() for u in os.getenv("ADMIN_USERNAMES", "").replace(";", ",").split(",") if u.strip()
+        ),
         db_path=os.getenv("DB_PATH", "laurence_lab.db"),
         currency=os.getenv("CURRENCY_SYMBOL", "₦"),
         bank_name=os.getenv("BANK_NAME", "Laurence Lab Bank"),

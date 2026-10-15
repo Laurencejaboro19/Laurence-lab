@@ -38,3 +38,29 @@ def test_formatting_roundtrip():
     tl = tracking_timeline(o)
     assert "← now" in tl and "Ready for pickup" in tl
     assert md(None) == ""
+
+
+def test_admin_by_username_registers_and_notifies(monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+    from telegram import Chat, Message, Update, User
+    from datetime import datetime
+
+    monkeypatch.setenv("ADMIN_USERNAMES", "@Dayankolev247, other")
+    from laurence_lab_bot.config import load_settings
+    from laurence_lab_bot.handlers.common import all_admin_ids, is_admin, register_admin_by_username
+    from laurence_lab_bot.storage import Storage
+
+    settings = load_settings()
+    assert settings.admin_usernames == ("dayankolev247", "other")
+    ctx = SimpleNamespace(bot=AsyncMock(), bot_data={"settings": settings, "storage": Storage(os.environ["DB_PATH"])}, user_data={})
+    user = User(555, "Laurence", False, username="Dayankolev247")
+    msg = Message(1, datetime.now(), Chat(555, "private"), from_user=user, text="/start")
+    assert not is_admin(ctx, 555)
+    asyncio.run(register_admin_by_username(Update(1, message=msg), ctx))
+    assert is_admin(ctx, 555) and all_admin_ids(ctx) == {1, 2, 555}
+    # a normal customer never becomes admin
+    msg2 = Message(2, datetime.now(), Chat(7, "private"), from_user=User(7, "Ada", False, username="ada"), text="hi")
+    asyncio.run(register_admin_by_username(Update(2, message=msg2), ctx))
+    assert not is_admin(ctx, 7)

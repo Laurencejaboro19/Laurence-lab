@@ -28,8 +28,31 @@ def currency(context: ContextTypes.DEFAULT_TYPE) -> str:
     return settings(context).currency
 
 
+def all_admin_ids(context: ContextTypes.DEFAULT_TYPE) -> set[int]:
+    ids = set(settings(context).admin_chat_ids)
+    try:
+        ids |= storage(context).admin_ids()
+    except Exception as exc:  # storage hiccup must not break the bot
+        log.warning("Could not read registered admins: %s", exc)
+    return ids
+
+
 def is_admin(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
-    return user_id in settings(context).admin_chat_ids
+    return user_id in all_admin_ids(context)
+
+
+async def register_admin_by_username(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Runs before every update: users whose @username is in ADMIN_USERNAMES become admins."""
+    user = update.effective_user
+    if user is None or not user.username:
+        return
+    cfg = settings(context)
+    if user.username.lower() in cfg.admin_usernames and user.id not in cfg.admin_chat_ids:
+        db = storage(context)
+        if user.id not in db.admin_ids():
+            chat = update.effective_chat
+            db.register_admin(user.id, user.username, chat.id if chat else user.id)
+            log.info("Registered admin @%s (%s)", user.username, user.id)
 
 
 # ------------------------------------------------------------------ user state
@@ -90,7 +113,7 @@ async def respond(
 async def notify_admins(
     context: ContextTypes.DEFAULT_TYPE, text: str, markup: InlineKeyboardMarkup | None = None
 ) -> None:
-    for admin_id in settings(context).admin_chat_ids:
+    for admin_id in sorted(all_admin_ids(context)):
         try:
             await context.bot.send_message(admin_id, text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         except (Forbidden, BadRequest) as exc:

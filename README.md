@@ -77,6 +77,7 @@ All settings live in `.env` (see `.env.example`):
 |---|---|
 | `BOT_TOKEN` | **Required.** From @BotFather |
 | `ADMIN_CHAT_IDS` | Comma-separated Telegram user IDs of staff. Get yours with `/myid` |
+| `ADMIN_USERNAMES` | Alternative: comma-separated staff @usernames. They become admins the first time they message the bot |
 | `BANK_NAME`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER` | Shown for bank-transfer payments |
 | `PAYSTACK_SECRET_KEY` | Enables the "Pay online" button (Paystack hosted checkout + verification) |
 | `TELEGRAM_PROVIDER_TOKEN` | Enables in-Telegram card payments (BotFather → `/mybots` → Payments) |

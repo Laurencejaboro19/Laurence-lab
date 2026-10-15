@@ -225,6 +225,15 @@ class BlobStorage:
             "open_tickets": sum(1 for t in tickets if t.get("status") == "open"),
         }
 
+    # -- admins ------------------------------------------------------------
+    def register_admin(self, user_id: int, username: str = "", chat_id: int | None = None) -> None:
+        rows = [r for r in self._index("admins") if r.get("user_id") != user_id]
+        rows.append({"user_id": user_id, "username": username, "chat_id": chat_id or user_id, "created_at": _now()})
+        self._save_index("admins", rows)
+
+    def admin_ids(self) -> set[int]:
+        return {r["user_id"] for r in self._index("admins")}
+
     # -- customers ---------------------------------------------------------
     def remember_customer(self, user_id: int, **fields: Any) -> None:
         existing = self.get_customer(user_id) or {}

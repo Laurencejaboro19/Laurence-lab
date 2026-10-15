@@ -54,6 +54,10 @@ def main() -> int:
                    max_connections=20, allowed_updates=["message", "edited_message", "callback_query",
                                                         "pre_checkout_query", "shipping_query"])
         call(token, "setMyCommands", commands=[{"command": c, "description": d} for c, d in COMMANDS])
+        call(token, "setMyShortDescription", short_description="Laurence Lab – fresh, fast food delivered to your doorstep.")
+        call(token, "setMyDescription", description=(
+            "Welcome to Laurence Lab! Browse the menu, order in plain English, pay online or on delivery, "
+            "and track your order live. Tap Start to begin."))
         print(f"register_webhook: @{me['username']} -> {url} : {res.get('description')}")
         print(f"register_webhook: bot link https://t.me/{me['username']}")
     except Exception as exc:  # never fail the build because Telegram hiccupped

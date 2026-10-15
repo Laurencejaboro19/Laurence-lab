@@ -6,13 +6,19 @@ from telegram.ext import (
     CommandHandler,
     MessageHandler,
     PreCheckoutQueryHandler,
+    TypeHandler,
     filters,
 )
+from telegram import Update
 
 from . import admin, cart, checkout, info, menu, payment, start, support, text, tracking
+from .common import register_admin_by_username
 
 
 def register(app: Application) -> None:
+    # Runs first for every update (group -1) and never blocks the real handlers
+    app.add_handler(TypeHandler(Update, register_admin_by_username), group=-1)
+
     # Commands
     app.add_handler(CommandHandler("start", start.cmd_start))
     app.add_handler(CommandHandler("help", start.cmd_help))
