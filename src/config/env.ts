@@ -38,6 +38,8 @@ const EnvSchema = z.object({
   TELEGRAM_ADMIN_BOT_TOKEN: z.string().default(''),
   TELEGRAM_WEBHOOK_SECRET: z.string().default(''),
   TELEGRAM_MODE: z.enum(['polling', 'webhook']).default('polling'),
+  /** Override for tests/mocks only. */
+  TELEGRAM_API_BASE_URL: z.url().default('https://api.telegram.org'),
 
   PAYSTACK_SECRET_KEY: z.string().default(''),
   PAYSTACK_PUBLIC_KEY: z.string().default(''),

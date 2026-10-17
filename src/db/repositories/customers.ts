@@ -257,6 +257,14 @@ export class PgCustomerRepository implements CustomerRepository {
     return (r.rowCount ?? 0) > 0;
   }
 
+  async findIdentityById(tx: Tx, identityId: string): Promise<ChannelIdentity | null> {
+    const r = await pgOf(tx).query<IdentityRow>(
+      `SELECT ${IDENTITY_COLS} FROM app.channel_identities WHERE id = $1`,
+      [identityId],
+    );
+    return r.rows[0] ? identityOf(r.rows[0]) : null;
+  }
+
   async identitiesOf(tx: Tx, customerId: string): Promise<ChannelIdentity[]> {
     const r = await pgOf(tx).query<IdentityRow>(
       `SELECT ${IDENTITY_COLS} FROM app.channel_identities WHERE customer_id = $1`,

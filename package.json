@@ -19,6 +19,7 @@
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seed.ts",
     "verify": "node scripts/verify.mjs",
+    "mock:paystack": "tsx src/providers/payments/mock-server.ts",
     "secrets:scan": "secretlint \"**/*\"",
     "prepare": "husky"
   },

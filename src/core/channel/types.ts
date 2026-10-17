@@ -84,6 +84,8 @@ export interface InboundButton extends InboundBase {
   messageRef?: MessageRef;
   /** The visible label, for logging and for stale-button messages. */
   label?: string;
+  /** Platform token needed to acknowledge the tap (Telegram callback_query id). */
+  ackToken?: string;
 }
 
 export interface InboundLocation extends InboundBase {
