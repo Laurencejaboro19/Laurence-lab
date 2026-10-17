@@ -391,6 +391,20 @@ export interface PaymentRepository {
       payloadRedacted?: unknown;
     },
   ): Promise<boolean>;
+  /** Events recorded but never processed (process died after the 200). */
+  listUnprocessedEvents(
+    tx: Tx,
+    olderThan: Date,
+    limit: number,
+  ): Promise<
+    {
+      provider: string;
+      externalEventId: string;
+      eventType: string;
+      reference: string | null;
+      payloadRedacted: Record<string, unknown>;
+    }[]
+  >;
   markEventProcessed(
     tx: Tx,
     provider: string,

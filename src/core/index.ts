@@ -53,6 +53,7 @@ export interface Core {
   uow: UnitOfWork;
   repos: CoreRepositories;
   events: EventBus;
+  gateway: PaymentGateway;
   clock: Clock;
   settings: SettingsService;
   customers: CustomerService;
@@ -104,6 +105,7 @@ export function createCore(deps: CoreDeps): Core {
     uow: deps.uow,
     repos,
     events: deps.events,
+    gateway: deps.gateway,
     clock,
     settings,
     customers,

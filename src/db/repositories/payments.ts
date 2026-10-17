@@ -170,6 +170,39 @@ export class PgPaymentRepository implements PaymentRepository {
     return (r.rowCount ?? 0) > 0;
   }
 
+  async listUnprocessedEvents(
+    tx: Tx,
+    olderThan: Date,
+    limit: number,
+  ): Promise<
+    {
+      provider: string;
+      externalEventId: string;
+      eventType: string;
+      reference: string | null;
+      payloadRedacted: Record<string, unknown>;
+    }[]
+  > {
+    const r = await pgOf(tx).query<{
+      provider: string;
+      external_event_id: string;
+      event_type: string;
+      reference: string | null;
+      payload_redacted: Record<string, unknown> | null;
+    }>(
+      `SELECT provider, external_event_id, event_type, reference, payload_redacted FROM app.payment_events
+       WHERE processed_at IS NULL AND received_at < $1 ORDER BY received_at LIMIT $2`,
+      [olderThan, limit],
+    );
+    return r.rows.map((x) => ({
+      provider: x.provider,
+      externalEventId: x.external_event_id,
+      eventType: x.event_type,
+      reference: x.reference,
+      payloadRedacted: x.payload_redacted ?? {},
+    }));
+  }
+
   async markEventProcessed(
     tx: Tx,
     provider: string,

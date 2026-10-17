@@ -16,6 +16,7 @@ import { createPool, PgUnitOfWork } from './db/client.js';
 import { createRepositories } from './db/repositories/index.js';
 import { buildServer } from './http/server.js';
 import { MockPaymentGateway } from './providers/payments/mock-gateway.js';
+import { PaystackGateway } from './providers/payments/paystack.js';
 
 async function main(): Promise<void> {
   const env = loadEnv();
@@ -31,8 +32,11 @@ async function main(): Promise<void> {
       events.discard(tx);
     },
   });
-  // Phase 4 swaps in the real Paystack client (test keys) and the local mock server.
-  const gateway = new MockPaymentGateway(env.PAYSTACK_SECRET_KEY || undefined);
+  // Real Paystack client whenever a key is configured (PAYSTACK_BASE_URL may point at the
+  // local mock server: `npm run mock:paystack`). Without a key, an in-memory mock.
+  const gateway = env.PAYSTACK_SECRET_KEY.startsWith('sk_')
+    ? new PaystackGateway({ secretKey: env.PAYSTACK_SECRET_KEY, baseUrl: env.PAYSTACK_BASE_URL })
+    : new MockPaymentGateway();
   const core = createCore({ uow, repos: createRepositories(), gateway, events });
 
   const app = await buildServer({
@@ -42,6 +46,7 @@ async function main(): Promise<void> {
     logLevel: env.LOG_LEVEL,
     prettyLogs: env.NODE_ENV === 'development',
     trustProxy: env.NODE_ENV === 'production',
+    enforcePaystackIps: env.NODE_ENV === 'production',
   });
   events.subscribe((event) => {
     app.log.info({ event }, 'domain event');
