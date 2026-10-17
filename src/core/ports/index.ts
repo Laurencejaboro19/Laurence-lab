@@ -257,8 +257,50 @@ export interface CustomerRepository {
   listAddresses(tx: Tx, customerId: string): Promise<Address[]>;
   findAddress(tx: Tx, customerId: string, addressId: string): Promise<Address | null>;
   addAddress(tx: Tx, input: Omit<Address, 'id'>): Promise<Address>;
+  findIdentityById(tx: Tx, identityId: string): Promise<ChannelIdentity | null>;
   deleteAddress(tx: Tx, customerId: string, addressId: string): Promise<boolean>;
   identitiesOf(tx: Tx, customerId: string): Promise<ChannelIdentity[]>;
+}
+
+export interface ConversationState {
+  identityId: string;
+  state: string;
+  context: Record<string, unknown>;
+  lastEventAt: Date | null;
+}
+
+export interface ConversationRepository {
+  /** Locks the row FOR UPDATE for the duration of the transaction (per-user ordering). */
+  lock(tx: Tx, identityId: string): Promise<ConversationState>;
+  save(tx: Tx, state: ConversationState): Promise<void>;
+  /** Insert-or-ignore on (source, external_id); false = already seen. */
+  recordInbound(tx: Tx, source: string, externalId: string): Promise<boolean>;
+  touchIdentity(tx: Tx, identityId: string, direction: 'in' | 'out', at: Date): Promise<void>;
+  markUnreachable(tx: Tx, identityId: string, at: Date | null): Promise<void>;
+  logMessage(
+    tx: Tx,
+    input: {
+      identityId: string;
+      direction: 'in' | 'out';
+      kind: string;
+      body?: string;
+      payload?: unknown;
+      externalMessageId?: string;
+      status?: string;
+      category?: 'service' | 'utility' | 'marketing' | 'authentication';
+    },
+  ): Promise<string>;
+  updateMessageStatus(
+    tx: Tx,
+    messageId: string,
+    status: string,
+    error?: { code?: string; detail?: string },
+  ): Promise<void>;
+  findFaq(
+    tx: Tx,
+    language: 'en' | 'pcm',
+    text: string,
+  ): Promise<{ question: string; answer: string } | null>;
 }
 
 export interface ZoneRepository {

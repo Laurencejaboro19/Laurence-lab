@@ -6,6 +6,7 @@ import type {
   AuditRepository,
   CartRepository,
   Clock,
+  ConversationRepository,
   CustomerRepository,
   EventBus,
   IdempotencyRepository,
@@ -39,6 +40,7 @@ export interface CoreRepositories {
   settings: SettingsRepository;
   audit: AuditRepository;
   idempotency: IdempotencyRepository;
+  conversations: ConversationRepository;
 }
 
 export interface CoreDeps {

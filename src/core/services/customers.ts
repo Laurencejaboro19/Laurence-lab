@@ -141,7 +141,14 @@ export class CustomerService {
     tx: Tx,
     actor: Actor,
     customerId: string,
-    input: { label?: string; textAddress?: string; point?: GeoPoint; makeDefault?: boolean },
+    input: {
+      label?: string;
+      textAddress?: string;
+      point?: GeoPoint;
+      makeDefault?: boolean;
+      /** For typed addresses without a pin: the zone the customer chose from the list. */
+      zoneId?: string;
+    },
   ): Promise<Address & { zoneName: string | null }> {
     this.assertCanAccess(actor, customerId);
     if (!input.point && !input.textAddress?.trim())
@@ -149,6 +156,12 @@ export class CustomerService {
     if (input.point && !isValidPoint(input.point)) throw validation('invalid coordinates');
     let zoneId: string | null = null;
     let zoneName: string | null = null;
+    if (!input.point && input.zoneId) {
+      const zone = await this.zones.findById(tx, input.zoneId);
+      if (!zone?.active) throw validation('that delivery area is not available');
+      zoneId = zone.id;
+      zoneName = zone.name;
+    }
     if (input.point) {
       const zone = findZone(input.point, await this.zones.listActive(tx));
       if (!zone) {
