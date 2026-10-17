@@ -4,6 +4,7 @@
 // type information. Plain JS scripts get the untyped recommended set.
 import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -13,10 +14,7 @@ export default tseslint.config(
   {
     files: ['**/*.js', '**/*.mjs'],
     extends: [eslint.configs.recommended],
-    languageOptions: {
-      sourceType: 'module',
-      globals: { process: 'readonly', console: 'readonly' },
-    },
+    languageOptions: { sourceType: 'module', globals: globals.node },
   },
   {
     files: ['**/*.ts'],
@@ -39,6 +37,8 @@ export default tseslint.config(
       // A switch over OrderStatus that misses a case must not lint cleanly.
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'error',
+      // `rows[0]!` after an INSERT … RETURNING is idiomatic; the stylistic preset prefers it too.
+      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       '@typescript-eslint/no-unused-vars': [
         'error',
