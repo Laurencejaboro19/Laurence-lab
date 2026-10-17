@@ -1,0 +1,7 @@
+# Pre-commit secret scan. Scans the files being committed, not the whole tree,
+# so it stays fast on a low-powered laptop or Termux.
+# Bypass only for a genuine false positive, and then add an ignore rule: git commit --no-verify
+FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+if [ -n "$FILES" ]; then
+  echo "$FILES" | xargs npx secretlint --no-color
+fi
