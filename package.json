@@ -26,9 +26,11 @@
     "@eslint/js": "^10.0.1",
     "@secretlint/secretlint-rule-preset-recommend": "13.0.7",
     "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
     "@vitest/coverage-v8": "5.0.5",
     "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
     "husky": "9.1.7",
     "prettier": "3.9.10",
     "secretlint": "13.0.7",
@@ -36,5 +38,10 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2",
     "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "dotenv": "18.0.8",
+    "pg": "8.23.1",
+    "zod": "4.6.7"
   }
 }

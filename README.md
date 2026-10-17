@@ -4,7 +4,7 @@ Chat-based food ordering platform for **Laurence Lab**, Benin City, Nigeria. Cus
 pay (Paystack), track delivery and get support entirely inside Telegram and WhatsApp. Staff run the
 business through a separate Telegram admin bot. There is no web front end.
 
-> **Status:** scaffold only. See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains
+> **Status:** phase 2 (data model) — no server yet. See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains
 > and `docs/` for architecture, decisions and owner reports as they land.
 
 ## Stack
@@ -37,8 +37,42 @@ cp .env.example .env     # edit DATABASE_URL_* for your local Postgres
 npm run verify
 ```
 
-Database setup, `npm run migrate`, `npm run seed` and `npm run dev` are documented here once phase 2
-lands (they will fail until then — expected).
+### Local database (plain PostgreSQL, no Docker)
+
+```bash
+# Ubuntu/Debian: sudo apt install postgresql     Termux: pkg install postgresql
+# Start the server (Termux: initdb $PREFIX/var/lib/postgresql && pg_ctl -D $PREFIX/var/lib/postgresql start)
+
+# 1. Roles (once per machine) — pick two passwords and put them in .env afterwards
+psql -h localhost -U postgres -d postgres \
+  -v migrate_password="'choose-one'" -v runtime_password="'choose-another'" \
+  -f src/db/setup/roles.sql
+
+# 2. Databases + the Supabase API roles used by the lockdown test (once)
+psql -h localhost -U postgres -d postgres -f src/db/setup/local-dev.sql
+
+# 3. Apply migrations and load seed data
+npm run migrate
+npm run seed
+
+# 4. Everything, including the database integration tests
+npm run verify
+```
+
+`npm run migrate -- status` lists applied and pending migrations. Tests that need a database are
+skipped automatically when `DATABASE_URL_TEST` is unset.
+
+### Supabase (staging / production)
+
+1. Create the project in **London (eu-west-2)**; see `docs/DECISION_RECORD.md` DR-004/DR-005.
+2. In the SQL editor run `src/db/setup/roles.sql` with the two `:'…'` variables replaced by strong
+   passwords, then delete them from the editor history.
+3. Set `DATABASE_URL_MIGRATE` to the **session pooler** (port 5432) as `app_migrate`, and
+   `DATABASE_URL` / `DATABASE_URL_DIRECT` as `app_runtime` (transaction pooler on 6543 is fine for
+   `DATABASE_URL` only). Run `npm run migrate`.
+4. Verify the lockdown over HTTP: `SUPABASE_URL=… SUPABASE_ANON_KEY=… node scripts/check-anon-lockdown.mjs`.
+5. Dashboard → Settings → API: leave `app` out of the exposed schemas (default) or disable the
+   Data API entirely; the app never uses it.
 
 ## npm scripts
 

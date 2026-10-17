@@ -4,6 +4,7 @@
 // type information. Plain JS scripts get the untyped recommended set.
 import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -13,10 +14,7 @@ export default tseslint.config(
   {
     files: ['**/*.js', '**/*.mjs'],
     extends: [eslint.configs.recommended],
-    languageOptions: {
-      sourceType: 'module',
-      globals: { process: 'readonly', console: 'readonly' },
-    },
+    languageOptions: { sourceType: 'module', globals: globals.node },
   },
   {
     files: ['**/*.ts'],
