@@ -477,6 +477,8 @@ export interface IdempotencyRepository {
     | { state: 'in_progress' }
   >;
   complete(tx: Tx, actorKey: string, key: string, statusCode: number, body: unknown): Promise<void>;
+  /** Drop a claim whose request failed with a server error so the client can retry. */
+  release(tx: Tx, actorKey: string, key: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------

@@ -6,6 +6,11 @@ branch in the branch plan (see README). Format follows Keep a Changelog; dates a
 ## [Unreleased]
 
 ### Added
+- Phase 3: pure domain (kobo money, order state machine as data, pricing, zones, text order parser),
+  ports and pg repositories, services (settings, customers, catalog, cart, orders, payments),
+  transactional in-process event bus, mock Paystack gateway, Fastify internal API v1 with signed
+  tokens, idempotency keys, rate limits, uniform errors and generated OpenAPI; `scripts/mint-token.mjs`;
+  `docs/REVIEW_GUIDE.md`, `docs/HANDOVER.md`, `docs/OWNER_REPORT.md`, `docs/changes/feat-core-platform.md`.
 - Phase 1: `docs/ARCHITECTURE.md`, `docs/DECISION_RECORD.md`, `docs/ASSUMPTIONS.md`; channel adapter
   contract (`src/core/channel`) with limit checks and a paginator.
 - Phase 2: seven SQL migrations (schema `app`, menu/inventory, orders/payments/delivery,

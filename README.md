@@ -4,7 +4,7 @@ Chat-based food ordering platform for **Laurence Lab**, Benin City, Nigeria. Cus
 pay (Paystack), track delivery and get support entirely inside Telegram and WhatsApp. Staff run the
 business through a separate Telegram admin bot. There is no web front end.
 
-> **Status:** phase 2 (data model) — no server yet. See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains
+> **Status:** phases 1–3 on `feat/core-platform` — core + internal API; no chat channel yet. See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains
 > and `docs/` for architecture, decisions and owner reports as they land.
 
 ## Stack
@@ -73,6 +73,16 @@ skipped automatically when `DATABASE_URL_TEST` is unset.
 4. Verify the lockdown over HTTP: `SUPABASE_URL=… SUPABASE_ANON_KEY=… node scripts/check-anon-lockdown.mjs`.
 5. Dashboard → Settings → API: leave `app` out of the exposed schemas (default) or disable the
    Data API entirely; the app never uses it.
+
+### Run it
+
+```bash
+npm run dev                                   # server on :3000; OpenAPI UI at /internal/v1/docs
+node scripts/mint-token.mjs system laptop     # bearer token for curl / the docs "Authorize" button
+curl -H "Authorization: Bearer $TOKEN" localhost:3000/internal/v1/menu
+```
+
+State-changing requests need an `Idempotency-Key` header. Adapter tokens also send `X-Customer-Id`.
 
 ## npm scripts
 

@@ -249,6 +249,13 @@ export class PgIdempotencyRepository implements IdempotencyRepository {
     return { state: 'replay', statusCode: row.status_code, body: row.response_body };
   }
 
+  async release(tx: Tx, actorKey: string, key: string): Promise<void> {
+    await pgOf(tx).query(`DELETE FROM app.idempotency_keys WHERE actor_key = $1 AND key = $2`, [
+      actorKey,
+      key,
+    ]);
+  }
+
   async complete(
     tx: Tx,
     actorKey: string,
