@@ -63,4 +63,4 @@ migrations have not run anywhere but local databases; `DROP SCHEMA app CASCADE` 
 
 ## Merge confirmation
 
-_Awaiting the builder's "merge and continue"._
+Builder confirmed on 2026-10-17 ("Merge … continue"). Merged `--no-ff`, tagged `v0.1.0-core`.
