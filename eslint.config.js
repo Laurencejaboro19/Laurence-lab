@@ -37,6 +37,8 @@ export default tseslint.config(
       // A switch over OrderStatus that misses a case must not lint cleanly.
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'error',
+      // `rows[0]!` after an INSERT … RETURNING is idiomatic; the stylistic preset prefers it too.
+      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       '@typescript-eslint/no-unused-vars': [
         'error',

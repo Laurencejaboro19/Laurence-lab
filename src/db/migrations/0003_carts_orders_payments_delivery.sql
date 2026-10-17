@@ -103,6 +103,7 @@ CREATE TRIGGER orders_updated_at BEFORE UPDATE ON app.orders
 CREATE TABLE app.order_items (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id          uuid NOT NULL REFERENCES app.orders(id) ON DELETE CASCADE,
+  line_no           integer NOT NULL DEFAULT 0,       -- display order as the customer built the cart
   item_id           uuid REFERENCES app.menu_items(id),  -- may be NULL if the item is later purged
   name_snapshot     text NOT NULL,
   variant_snapshot  text,
