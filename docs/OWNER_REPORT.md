@@ -4,6 +4,82 @@ Plain-language status after each phase. Newest first.
 
 ---
 
+## Phase 4 — Telegram customer bot + Paystack test mode (branch `feat/telegram-customer`)
+
+**Date:** 2026-10-17
+
+### What works (and was run)
+
+- **The customer bot, end to end**, driven by real Telegram Update payloads against a fake Bot API in
+  tests and smoke-booted as the real process: `/start` → language (English or Pidgin) → privacy
+  note → phone (contact button or typed) → persistent Menu / Cart / Track / Help shortcuts → browse
+  by category with paging → item detail → add → **or just type** "2 jollof and 1 chicken" →
+  confirm → cart editing (➖ ➕ 🗑) → checkout → delivery (saved address, shared pin or typed address
+  - area) or pickup → summary with fee and ETA → **Pay** button (Paystack) → cancel link →
+    payment-received push → kitchen status pushes → `/track` with live status → reorder →
+    `/privacy`, `/export_my_data`, `/delete_my_data`.
+- **Paystack for real**: the production client talks to the documented endpoints; locally it talks
+  to `npm run mock:paystack`, which serves a checkout page and posts a correctly signed webhook back.
+  Bad or tampered signatures are rejected before any parsing; duplicate deliveries are acknowledged
+  but ignored; events are processed after the 200 and replayed on restart if the process died.
+- Robustness: group chats declined, blocked users marked unreachable (and cleared when they return),
+  stale buttons answered with a fresh menu, 429s honoured, callback data kept under 64 bytes,
+  HTML escaped, per-user ordering guaranteed by a row lock.
+- `npm run verify` → **PASS**, 790 tests.
+
+### Evidence
+
+```
+test/core/conversation.test.ts   11 passed  (full journey through the engine)
+test/telegram/adapter.test.ts     9 passed  (normalise + render + 403/429 handling)
+test/telegram/journey.test.ts     6 passed  (webhook secret/dedupe, onboarding, order, pay, pushes, blocked)
+test/http/paystack-webhook.test   6 passed  (real gateway → mock → webhook → PAID; tampering; replay)
+smoke: `npx tsx src/main.ts` with a fake Bot API → "telegram customer bot polling — https://t.me/LaurenceLabBot",
+       /start handled, welcome message sent
+```
+
+### What is mocked or not yet real
+
+- No live Telegram or Paystack call was made from the build environment (outbound network is
+  blocked there). The first real run is yours: paste the BotFather token into `.env` and
+  `npm run dev` (README → "Run the Telegram customer bot locally").
+- Paystack **test keys** only. Live keys are a launch-day owner action.
+- Kitchen actions still go through the API; the admin bot is phase 5.
+- Delivery is not integrated: READY on a delivery order emits `delivery.requested` and the
+  customer gets "on the way" only when staff mark DISPATCHED (phase 6 adds the partner/rider details).
+- Scheduler (expire unpaid orders, reconcile payments, run refunds) is phase 7; the functions exist.
+- The synthetic Paystack customer email (`<phone>@customers.laurencelab.invalid`) is still to be
+  confirmed against the real test API on your first run — if Paystack rejects it, we switch to a
+  configurable domain (one-line change in `src/core/services/orders.ts`).
+
+### What could lose money or leak data (and what guards it)
+
+Unchanged from phases 1–3, plus: **webhook authenticity** (constant-time HMAC-SHA512 on raw body,
+tested with unsigned/tampered/wrong-key bodies) and **Telegram webhook authenticity** (constant-time
+secret token on an unguessable path, tested). See `docs/REVIEW_GUIDE.md` rows 8 and 12.
+
+### NOT DONE (with the risk each creates)
+
+| Item                                                     | Risk                                                        | Planned                                                           |
+| -------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| Live run with the real bot token                         | Unknown unknowns on the real Bot API until you run it       | Owner, now                                                        |
+| Admin bot                                                | Kitchen uses the API/curl; slow                             | Phase 5                                                           |
+| Delivery partner / rider details in "on the way" message | Customer sees no rider name/phone yet                       | Phase 6                                                           |
+| Scheduler for expiry/reconcile/refund jobs               | Unpaid orders expire only when the sweep is run manually    | Phase 7                                                           |
+| Item photos                                              | Menu is text-only until photos are uploaded via admin bot   | Phase 5                                                           |
+| Cross-channel account linking after phone match          | Second channel with the same phone is kept separate for now | Phase 9                                                           |
+| Git tags cannot be pushed from the build session         | `v0.1.0-core` exists locally only                           | Owner: `git tag v0.1.0-core aa313f6; git push origin v0.1.0-core` |
+
+### What the owner must do next
+
+1. Put `TELEGRAM_CUSTOMER_BOT_TOKEN` in `.env`, follow the README PowerShell steps, and send `/start`
+   to your bot. Report anything odd — screenshots are perfect.
+2. Reply **"merge and continue"** on PR #2 (`feat/telegram-customer`).
+3. Set `main` as the default branch, make the repo private, push the tag (command above).
+4. Create a Paystack account and get **test** keys when you want to see the real checkout page.
+
+---
+
 ## Phases 1–3 — architecture, data model, core and internal API (branch `feat/core-platform`)
 
 **Date:** 2026-10-17
