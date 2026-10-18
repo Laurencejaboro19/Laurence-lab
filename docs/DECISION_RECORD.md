@@ -184,6 +184,31 @@ is identical because both paths construct the same `Actor` and hit the same serv
 **What this preserves:** no business logic in the adapter; every rule (IDOR, roles, stock,
 payments) lives once, in `src/core`, and is exercised by both the API tests and the bot tests.
 
+## DR-012 — Pilot hosting on Vercel (owner's choice), with the serverless adaptations spelled out
+
+**Context:** DR-004 recommended an always-on host and rejected serverless-only platforms. The
+owner already has a Vercel Hobby project (`laurence-lab-bot`) and asked for the bot to run there
+now. This record documents what that costs and how the code adapts, so the trade-off is explicit.
+
+**Adaptations (all in `src/http/serverless.ts`, nothing in the core changed):**
+
+| Constraint on Vercel Hobby            | Adaptation                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| No long-lived process                 | Telegram webhook mode only; `/setup/telegram` installs it                                                 |
+| Process may freeze after the response | `BackgroundRunner` in `inline` mode: webhook work completes before the 200 (a few seconds)                |
+| Cron at most once per day             | Maintenance sweep (expiry, reconcile, replay, refunds) piggybacks on requests, ≤ 1/min, plus a daily cron |
+| No Postgres on Vercel                 | Supabase (as the spec requires); pool size 2 per instance; transaction pooler for `DATABASE_URL`          |
+| Cold starts                           | App built once per warm instance and cached                                                               |
+| Nowhere to run `npm run migrate`      | `/setup/migrate` and `/setup/seed`, guarded by a key derived from `INTERNAL_API_SECRET`                   |
+
+**What this does NOT change:** every rule in the core (stock, payments, roles, audit) and every test.
+The same code runs with `npm run dev` locally and on an always-on host later.
+
+**When to move off Vercel:** when order volume makes a 1-minute maintenance cadence or inline
+processing a problem, or when the admin bot's real-time features (phase 5) need push rather than
+request-driven work. Fly.io per DR-004 remains the recommended destination; the change is one
+environment variable (`TELEGRAM_MODE=polling`) and `npm start`.
+
 ## Open items to verify later (tracked, not forgotten)
 
 | Item                                     | Verify in | Why it is not decided now                              |

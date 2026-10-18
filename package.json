@@ -2,14 +2,14 @@
   "name": "laurence-lab-bot",
   "version": "0.0.1",
   "private": true,
-  "description": "Laurence Lab Bot — chat-based food ordering platform for Telegram and WhatsApp (Nigeria).",
+  "description": "Laurence Lab Bot \u2014 chat-based food ordering platform for Telegram and WhatsApp (Nigeria).",
   "type": "module",
   "engines": {
     "node": ">=22.12"
   },
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-migrations.mjs",
     "start": "node dist/main.js",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -21,7 +21,8 @@
     "verify": "node scripts/verify.mjs",
     "mock:paystack": "tsx src/providers/payments/mock-server.ts",
     "secrets:scan": "secretlint \"**/*\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup-key": "node scripts/setup-key.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

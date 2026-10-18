@@ -20,7 +20,7 @@ import { z } from 'zod';
 import type { Core } from '../core/index.js';
 import { withClient } from '../db/client.js';
 import { pgOf } from '../db/client.js';
-import { BackgroundRunner } from '../jobs/background.js';
+import { BackgroundRunner, type BackgroundMode } from '../jobs/background.js';
 
 import {
   authPlugin,
@@ -42,6 +42,8 @@ export interface ServerOptions {
   trustProxy?: boolean;
   /** Enforce Paystack's published webhook source IPs (production). */
   enforcePaystackIps?: boolean;
+  /** 'inline' on serverless hosts: finish background work before the response is sent. */
+  backgroundMode?: BackgroundMode;
 }
 
 declare module 'fastify' {
@@ -87,7 +89,14 @@ export async function buildServer(opts: ServerOptions): Promise<FastifyInstance>
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.decorate('core', opts.core);
-  app.decorate('background', new BackgroundRunner(app.log));
+  app.decorate('background', new BackgroundRunner(app.log, opts.backgroundMode ?? 'detached'));
+  if (opts.backgroundMode === 'inline') {
+    // Webhook handlers enqueue then reply; on serverless we must drain before replying.
+    app.addHook('preSerialization', async (req, _reply, payload) => {
+      if (req.url.startsWith('/webhooks/')) await app.background.settle();
+      return payload;
+    });
+  }
 
   await app.register(sensible);
   await app.register(helmet, { global: true, contentSecurityPolicy: false });

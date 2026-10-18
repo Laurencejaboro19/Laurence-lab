@@ -1,0 +1,6 @@
+test
+docs
+coverage
+.github
+.husky
+*.md
