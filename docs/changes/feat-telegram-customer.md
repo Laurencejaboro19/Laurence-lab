@@ -52,4 +52,4 @@ Revert the merge commit. No schema changes; the previous release keeps working.
 
 ## Merge confirmation
 
-_Awaiting the builder's "merge and continue"._
+Builder confirmed on 2026-10-18 ("1 merge and continue"). Merged `--no-ff`, tagged `v0.2.0-telegram-customer`.
