@@ -4,6 +4,28 @@ Plain-language status after each phase. Newest first.
 
 ---
 
+## Deployment — Vercel pilot hosting (merged to `main` 2026-10-18)
+
+**Decision:** the owner asked for the bot to run on his existing Vercel project
+`laurence-lab-bot` (Hobby plan). DR-012 records the serverless trade-offs; the core is untouched.
+
+**Done by the builder:** `src/http/serverless.ts` + `vercel.json`; Vercel env vars set (both bot
+tokens as _sensitive_, webhook secret, internal secret, cron secret, mode/log settings, **placeholder**
+database URLs); production build green on `main`; `docs/DEPLOY_VERCEL.md` written.
+
+**Blocked on the owner (in this order):**
+
+1. Create the Supabase project and roles, then put the three real `DATABASE_URL*` values into Vercel
+   (`docs/DEPLOY_VERCEL.md` §1–2) and redeploy.
+2. Open the four `/setup/*?key=…` URLs (§3) — the key is in the chat with the builder.
+3. `PAYSTACK_SECRET_KEY` (test) for the Pay button to work on Vercel (§4).
+4. Before real customers: revoke and replace both bot tokens (§5); make the repo private.
+
+**Until step 1 is done** the deployment answers `/` and `/healthz`, but every route that needs the
+database (including the Telegram webhook) will return an error — expected.
+
+---
+
 ## Phase 4 — Telegram customer bot + Paystack test mode (branch `feat/telegram-customer`)
 
 **Date:** 2026-10-17

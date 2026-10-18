@@ -5,15 +5,16 @@ system. Updated at the end of every phase. Names of secrets appear here; **value
 
 ## Services and accounts (owner-held)
 
-| Service       | Purpose                      | Status (2026-10-17)                                                     |
-| ------------- | ---------------------------- | ----------------------------------------------------------------------- |
-| GitHub        | source, CI                   | `Laurencejaboro19/Laurence-lab`, branch `main` — make default + private |
-| Supabase      | Postgres (dev/staging/prod)  | not yet created; London `eu-west-2`                                     |
-| Paystack      | payments                     | not yet created; test keys first                                        |
-| Telegram      | customer bot + admin bot     | not yet created (@BotFather)                                            |
-| Meta Business | WhatsApp Cloud API (phase 9) | start verification now                                                  |
-| Host          | Node process (Fly.io, `lhr`) | decided; not yet created (phase 8)                                      |
-| Sentry        | error tracking               | phase 8                                                                 |
+| Service       | Purpose                                        | Status (2026-10-17)                                                                  |
+| ------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| GitHub        | source, CI                                     | `Laurencejaboro19/Laurence-lab`, branch `main` — make default + private              |
+| Supabase      | Postgres (dev/staging/prod)                    | not yet created; London `eu-west-2`                                                  |
+| Paystack      | payments                                       | not yet created; test keys first                                                     |
+| Telegram      | customer bot + admin bot                       | @LaurencelabBot, @LaurenceLabAdminBot — tokens in Vercel; revoke+rotate before pilot |
+| Meta Business | WhatsApp Cloud API (phase 9)                   | start verification now                                                               |
+| Host (pilot)  | Vercel Hobby `laurence-lab-bot`, region `lhr1` | live build; needs Supabase URLs (docs/DEPLOY_VERCEL.md)                              |
+| Host (scale)  | Node process (Fly.io, `lhr`)                   | recommended later (DR-004/DR-012)                                                    |
+| Sentry        | error tracking                                 | phase 8                                                                              |
 
 ## Environment variables
 
@@ -21,7 +22,8 @@ See `.env.example` for the full list with comments. Groups:
 
 - Database: `DATABASE_URL`, `DATABASE_URL_DIRECT`, `DATABASE_URL_MIGRATE`, `DATABASE_POOLED`,
   (`DATABASE_URL_TEST`, `DATABASE_URL_TEST_RUNTIME` for tests)
-- Internal API: `INTERNAL_API_SECRET` (32+ random bytes; rotating it invalidates all tokens)
+- Internal API: `INTERNAL_API_SECRET` (32+ random bytes; rotating it invalidates all tokens **and changes the /setup key and Telegram webhook path** — re-run `/setup/telegram` after rotating)
+- Vercel only: `CRON_SECRET` (authorises `/jobs/daily`)
 - Telegram: `TELEGRAM_CUSTOMER_BOT_TOKEN`, `TELEGRAM_ADMIN_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_MODE`
 - Paystack: `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_BASE_URL`
 - Delivery / maps / AI / WhatsApp / Sentry: as listed in `.env.example`
