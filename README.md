@@ -135,6 +135,13 @@ reconciliation sweep (phase 7) and the "verify" endpoint settle payments.
 `TELEGRAM_WEBHOOK_SECRET=<random>`. The path is derived from the token and never logged. Use a
 separate staging bot pair (two more BotFather bots) for staging.
 
+## Hosting the pilot on Vercel
+
+The owner's existing Vercel project runs the same code in serverless mode (`api/index.js` →
+`src/http/serverless.ts`): Telegram webhooks, inline processing, request-driven maintenance,
+browser-based `/setup/*` bootstrap. Step-by-step owner guide: `docs/DEPLOY_VERCEL.md`. Trade-offs
+versus an always-on host: `docs/DECISION_RECORD.md` DR-012.
+
 ## npm scripts
 
 | Script          | What it does                                                       |

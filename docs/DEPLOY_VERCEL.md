@@ -28,8 +28,8 @@ GRANT CREATE ON DATABASE postgres TO app_migrate;
 Either paste these three into **Vercel → laurence-lab-bot → Settings → Environment Variables**
 (replace the existing placeholders), or send them to the builder to set:
 
-| Variable               | Value                                                                                                      |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Variable               | Value                                                                                               |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`         | user `app_runtime.<ref>`, password CHOOSE-ANOTHER, host from step 1.2, **port 6543**, db `postgres` |
 | `DATABASE_URL_DIRECT`  | user `app_runtime.<ref>`, password CHOOSE-ANOTHER, same host, **port 5432**, db `postgres`          |
 | `DATABASE_URL_MIGRATE` | user `app_migrate.<ref>`, password CHOOSE-ONE, same host, **port 5432**, db `postgres`              |

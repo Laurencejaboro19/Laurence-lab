@@ -6,6 +6,12 @@ branch in the branch plan (see README). Format follows Keep a Changelog; dates a
 ## [Unreleased]
 
 ### Added
+- Vercel serverless entry (webhook mode, inline background work, request-driven maintenance,
+  `/setup/*` bootstrap routes, daily cron), `vercel.json`, `docs/DEPLOY_VERCEL.md`, DR-012.
+
+## [0.2.0-telegram-customer] — 2026-10-18
+
+### Added
 - Phase 4: Telegram customer bot (client with rate limiting, adapter, polling + webhook modes),
   channel-neutral conversation engine in English and Pidgin (onboarding, menu, text ordering, cart,
   checkout with pins/typed addresses, Paystack button, tracking, reorder, privacy commands), customer
