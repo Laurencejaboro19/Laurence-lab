@@ -39,7 +39,12 @@ Assemble each as `postgresql://USER:PASSWORD@HOST:PORT/postgres`.
 (`<ref>` and the host come from the string you copied in step 1.2; the pooler needs the
 `role.<ref>` username form. Port 6543 = transaction pooler, 5432 = session pooler.)
 
-Then **Deployments → ⋯ → Redeploy** so the new values are picked up.
+Then **Deployments → ⋯ → Redeploy** so the new values are picked up (or push any commit to
+`main`; Vercel rebuilds automatically).
+
+Notes from the first real run: Vercel refuses a user-set `NODE_ENV` (it sets `production`
+itself — leave it out), and the whole block can be pasted into the **Key** box of the "Add"
+form in one go; it splits into rows.
 
 ## 3. Bootstrap from the browser
 

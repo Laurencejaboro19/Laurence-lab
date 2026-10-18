@@ -8,7 +8,7 @@ system. Updated at the end of every phase. Names of secrets appear here; **value
 | Service       | Purpose                                        | Status (2026-10-17)                                                                  |
 | ------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------ |
 | GitHub        | source, CI                                     | `Laurencejaboro19/Laurence-lab`, branch `main` — make default + private              |
-| Supabase      | Postgres (dev/staging/prod)                    | not yet created; London `eu-west-2`                                                  |
+| Supabase      | Postgres (dev/staging/prod)                    | `laurence-lab-prod` created 2026-10-18 (Free, London `eu-west-2`); roles applied     |
 | Paystack      | payments                                       | not yet created; test keys first                                                     |
 | Telegram      | customer bot + admin bot                       | @LaurencelabBot, @LaurenceLabAdminBot — tokens in Vercel; revoke+rotate before pilot |
 | Meta Business | WhatsApp Cloud API (phase 9)                   | start verification now                                                               |
