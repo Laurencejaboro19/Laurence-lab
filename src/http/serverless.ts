@@ -105,6 +105,7 @@ async function build(env: Env): Promise<FastifyInstance> {
     trustProxy: true,
     enforcePaystackIps: env.NODE_ENV === 'production',
     backgroundMode: 'inline',
+    docsUi: false, // see server.ts: @fastify/static cannot load on Vercel's Node 24
   });
 
   const brand = await core.uow
@@ -156,7 +157,7 @@ async function build(env: Env): Promise<FastifyInstance> {
       ? 'configured'
       : 'missing TELEGRAM_CUSTOMER_BOT_TOKEN / TELEGRAM_WEBHOOK_SECRET',
     payments: gateway.name,
-    docs: '/internal/v1/docs',
+    openapi: '/internal/v1/openapi.json',
   }));
 
   app.get('/setup', async (req, reply) => {

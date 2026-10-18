@@ -88,4 +88,4 @@ Paystack's docs; no real money moves in test mode.
 - **`/setup/telegram` returns 400** — `TELEGRAM_CUSTOMER_BOT_TOKEN` or
   `TELEGRAM_WEBHOOK_SECRET` is not set on the deployment.
 - **Variables edited but nothing changes** — environment variables apply only to deployments
-  created *after* the edit. Redeploy (Deployments → ⋯ → Redeploy).
+  created _after_ the edit. Redeploy (Deployments → ⋯ → Redeploy).

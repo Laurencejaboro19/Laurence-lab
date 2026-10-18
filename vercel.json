@@ -3,9 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci --ignore-scripts --include=dev",
   "framework": null,
-  "regions": [
-    "lhr1"
-  ],
+  "regions": ["lhr1"],
   "functions": {
     "api/index.js": {
       "includeFiles": "dist/**",

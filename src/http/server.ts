@@ -6,7 +6,6 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
-import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { type FastifyInstance } from 'fastify';
 import {
   jsonSchemaTransform,
@@ -44,6 +43,8 @@ export interface ServerOptions {
   enforcePaystackIps?: boolean;
   /** 'inline' on serverless hosts: finish background work before the response is sent. */
   backgroundMode?: BackgroundMode;
+  /** Serve the Swagger UI at /internal/v1/docs (default true; off on serverless hosts). */
+  docsUi?: boolean;
 }
 
 declare module 'fastify' {
@@ -183,10 +184,16 @@ export async function buildServer(opts: ServerOptions): Promise<FastifyInstance>
     },
     { prefix: '/internal/v1' },
   );
-  await app.register(swaggerUi, {
-    routePrefix: '/internal/v1/docs',
-    uiConfig: { docExpansion: 'list' },
-  });
+  if (opts.docsUi ?? true) {
+    // Loaded lazily: @fastify/swagger-ui pulls in @fastify/static, whose ESM-only
+    // dependency (content-disposition 3) cannot be require()d on Vercel's Node 24
+    // runtime. The serverless entry turns the UI off; /openapi.json stays available.
+    const { default: swaggerUi } = await import('@fastify/swagger-ui');
+    await app.register(swaggerUi, {
+      routePrefix: '/internal/v1/docs',
+      uiConfig: { docExpansion: 'list' },
+    });
+  }
 
   // --- provider webhooks -----------------------------------------------------
   registerPaystackWebhook(app, {
