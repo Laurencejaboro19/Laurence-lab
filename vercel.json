@@ -3,10 +3,26 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci --ignore-scripts",
   "framework": null,
-  "regions": ["lhr1"],
+  "regions": [
+    "lhr1"
+  ],
   "functions": {
-    "api/index.js": { "includeFiles": "dist/**", "maxDuration": 60 }
+    "api/index.js": {
+      "includeFiles": "dist/**",
+      "maxDuration": 60
+    }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
-  "crons": [{ "path": "/jobs/daily", "schedule": "0 3 * * *" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/jobs/daily",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "outputDirectory": "public"
 }
