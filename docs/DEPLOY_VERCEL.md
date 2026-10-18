@@ -76,3 +76,16 @@ Paystack's docs; no real money moves in test mode.
   `SUPABASE_URL=… SUPABASE_ANON_KEY=… node scripts/check-anon-lockdown.mjs`.
 - Vercel Hobby runs the daily cron at 03:00 UTC; day-to-day maintenance runs on request traffic
   (DR-012).
+
+## 6. Troubleshooting
+
+- **A JSON page saying `"error": "function failed"`** — the function could not start. The
+  `message` names the cause (a missing or malformed environment variable, a module that failed
+  to load). Fix the variable in Vercel, redeploy, retry. `api/index.js` produces this page so
+  the cause is never hidden behind Vercel's generic `FUNCTION_INVOCATION_FAILED` screen.
+- **`/setup` says `database: error: …`** — the connection string is wrong or the Supabase
+  project is paused. Check the three `DATABASE_URL*` values (§2) and the project status.
+- **`/setup/telegram` returns 400** — `TELEGRAM_CUSTOMER_BOT_TOKEN` or
+  `TELEGRAM_WEBHOOK_SECRET` is not set on the deployment.
+- **Variables edited but nothing changes** — environment variables apply only to deployments
+  created *after* the edit. Redeploy (Deployments → ⋯ → Redeploy).
