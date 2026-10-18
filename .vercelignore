@@ -1,0 +1,7 @@
+test
+docs
+coverage
+.github
+.husky
+*.md
+!docs/DEPLOY_VERCEL.md
