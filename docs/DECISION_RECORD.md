@@ -170,6 +170,20 @@ prices in phase 8.
 
 ---
 
+## DR-011 — In-process chat adapters call the core services directly
+
+**Chosen:** the Telegram (and later WhatsApp) adapters run inside the same Node process as the
+API and call the core services through the same `Actor`-scoped service layer the API routes
+call. The internal HTTP API remains the only way for anything _outside_ the process (admin tools,
+a future dashboard, jobs on another box) to reach business logic.
+
+**Rejected:** having the adapter POST to its own HTTP API over loopback for every button tap.
+It doubles serialisation and connection use on a small VM for no isolation gain — authorisation
+is identical because both paths construct the same `Actor` and hit the same services.
+
+**What this preserves:** no business logic in the adapter; every rule (IDOR, roles, stock,
+payments) lives once, in `src/core`, and is exercised by both the API tests and the bot tests.
+
 ## Open items to verify later (tracked, not forgotten)
 
 | Item                                     | Verify in | Why it is not decided now                              |

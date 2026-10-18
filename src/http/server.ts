@@ -20,6 +20,7 @@ import { z } from 'zod';
 import type { Core } from '../core/index.js';
 import { withClient } from '../db/client.js';
 import { pgOf } from '../db/client.js';
+import { BackgroundRunner } from '../jobs/background.js';
 
 import {
   authPlugin,
@@ -29,6 +30,7 @@ import {
   requestIdPlugin,
 } from './plugins.js';
 import { registerInternalV1 } from './routes/internal/v1/index.js';
+import { registerPaystackWebhook } from './routes/webhooks/paystack.js';
 
 export interface ServerOptions {
   core: Core;
@@ -38,6 +40,14 @@ export interface ServerOptions {
   /** Pretty logs in development only. */
   prettyLogs?: boolean;
   trustProxy?: boolean;
+  /** Enforce Paystack's published webhook source IPs (production). */
+  enforcePaystackIps?: boolean;
+}
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    background: BackgroundRunner;
+  }
 }
 
 export async function buildServer(opts: ServerOptions): Promise<FastifyInstance> {
@@ -77,6 +87,7 @@ export async function buildServer(opts: ServerOptions): Promise<FastifyInstance>
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.decorate('core', opts.core);
+  app.decorate('background', new BackgroundRunner(app.log));
 
   await app.register(sensible);
   await app.register(helmet, { global: true, contentSecurityPolicy: false });
@@ -166,6 +177,16 @@ export async function buildServer(opts: ServerOptions): Promise<FastifyInstance>
   await app.register(swaggerUi, {
     routePrefix: '/internal/v1/docs',
     uiConfig: { docExpansion: 'list' },
+  });
+
+  // --- provider webhooks -----------------------------------------------------
+  registerPaystackWebhook(app, {
+    background: app.background,
+    enforceSourceIps: opts.enforcePaystackIps ?? false,
+  });
+
+  app.addHook('onClose', async () => {
+    await app.background.drain();
   });
 
   return app;

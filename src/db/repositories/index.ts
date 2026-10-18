@@ -1,4 +1,5 @@
 import { PgCartRepository } from './carts.js';
+import { PgConversationRepository } from './conversations.js';
 import { PgCustomerRepository } from './customers.js';
 import { PgInventoryRepository } from './inventory.js';
 import { PgMenuRepository, PgZoneRepository } from './menu.js';
@@ -25,6 +26,7 @@ export function createRepositories(): Repositories {
     settings: new PgSettingsRepository(),
     audit: new PgAuditRepository(),
     idempotency: new PgIdempotencyRepository(),
+    conversations: new PgConversationRepository(),
   };
 }
 
@@ -40,4 +42,5 @@ export interface Repositories {
   settings: PgSettingsRepository;
   audit: PgAuditRepository;
   idempotency: PgIdempotencyRepository;
+  conversations: PgConversationRepository;
 }

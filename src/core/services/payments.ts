@@ -91,6 +91,19 @@ export class PaymentService {
   async processProviderEvent(
     event: ProviderEvent,
   ): Promise<{ deduped: boolean; outcome?: SettleOutcome }> {
+    const { deduped, externalEventId } = await this.ingestProviderEvent(event);
+    if (deduped) return { deduped: true };
+    const outcome = await this.processRecordedEvent(externalEventId, event);
+    return { deduped: false, ...(outcome ? { outcome } : {}) };
+  }
+
+  /**
+   * Step 1 of webhook handling: record + dedupe, in one short transaction. The
+   * HTTP route returns 200 right after this. Returns the stable event id.
+   */
+  async ingestProviderEvent(
+    event: ProviderEvent,
+  ): Promise<{ deduped: boolean; externalEventId: string }> {
     const externalEventId = PaymentService.eventId(event);
     const fresh = await this.uow.transaction((tx) =>
       this.payments.recordEvent(tx, {
@@ -101,8 +114,14 @@ export class PaymentService {
         payloadRedacted: event.payloadRedacted,
       }),
     );
-    if (!fresh) return { deduped: true };
+    return { deduped: !fresh, externalEventId };
+  }
 
+  /** Step 2: the real work, run in the background (or by the replay sweep). */
+  async processRecordedEvent(
+    externalEventId: string,
+    event: ProviderEvent,
+  ): Promise<SettleOutcome | undefined> {
     let outcome: SettleOutcome | undefined;
     if (event.eventType === 'charge.success' && event.reference) {
       outcome = await this.verifyAndSettle(event.reference, { type: 'provider', id: 'paystack' });
@@ -110,7 +129,24 @@ export class PaymentService {
     await this.uow.transaction((tx) =>
       this.payments.markEventProcessed(tx, event.provider, externalEventId, outcome ?? 'recorded'),
     );
-    return { deduped: false, ...(outcome ? { outcome } : {}) };
+    return outcome;
+  }
+
+  /** Startup/scheduler sweep: finish events whose processing never ran (crash after the 200). */
+  async replayUnprocessedEvents(olderThanSeconds = 30, limit = 100): Promise<number> {
+    const cutoff = new Date(this.clock.now().getTime() - olderThanSeconds * 1000);
+    const pending = await this.uow.transaction((tx) =>
+      this.payments.listUnprocessedEvents(tx, cutoff, limit),
+    );
+    for (const p of pending) {
+      await this.processRecordedEvent(p.externalEventId, {
+        provider: p.provider as 'paystack',
+        eventType: p.eventType,
+        reference: p.reference,
+        payloadRedacted: p.payloadRedacted,
+      });
+    }
+    return pending.length;
   }
 
   /**

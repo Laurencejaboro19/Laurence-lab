@@ -4,7 +4,7 @@ Chat-based food ordering platform for **Laurence Lab**, Benin City, Nigeria. Cus
 pay (Paystack), track delivery and get support entirely inside Telegram and WhatsApp. Staff run the
 business through a separate Telegram admin bot. There is no web front end.
 
-> **Status:** phases 1–3 on `feat/core-platform` — core + internal API; no chat channel yet. See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains
+> **Status:** `v0.1.0-core` merged; phase 4 (Telegram customer bot + Paystack test mode) on `feat/telegram-customer`. See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains
 > and `docs/` for architecture, decisions and owner reports as they land.
 
 ## Stack
@@ -84,20 +84,72 @@ curl -H "Authorization: Bearer $TOKEN" localhost:3000/internal/v1/menu
 
 State-changing requests need an `Idempotency-Key` header. Adapter tokens also send `X-Customer-Id`.
 
+## Run the Telegram customer bot locally (Windows PowerShell)
+
+Nothing needs a public URL: the bot long-polls Telegram and Paystack is a local mock.
+
+```powershell
+# 0. One-time: Node 22+, PostgreSQL 16 (installer from postgresql.org), Git
+git clone https://github.com/Laurencejaboro19/Laurence-lab.git; cd Laurence-lab
+npm ci
+
+# 1. Database roles + databases (enter the postgres password you chose at install)
+psql -h localhost -U postgres -d postgres -v migrate_password="'migrate-dev'" -v runtime_password="'runtime-dev'" -f src/db/setup/roles.sql
+psql -h localhost -U postgres -d postgres -f src/db/setup/local-dev.sql
+
+# 2. Environment
+Copy-Item .env.example .env
+notepad .env
+#   Put the two passwords from step 1 after the role name, e.g. app_runtime:runtime-dev@
+#   DATABASE_URL=postgres://app_runtime@localhost:5432/laurence_lab
+#   DATABASE_URL_DIRECT=postgres://app_runtime@localhost:5432/laurence_lab
+#   DATABASE_URL_MIGRATE=postgres://app_migrate@localhost:5432/laurence_lab
+#   DATABASE_URL_TEST=postgres://app_migrate@localhost:5432/laurence_lab_test
+#   DATABASE_URL_TEST_RUNTIME=postgres://app_runtime@localhost:5432/laurence_lab_test
+#   INTERNAL_API_SECRET=<paste output of: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
+#   TELEGRAM_CUSTOMER_BOT_TOKEN=<your @BotFather token>
+#   PAYSTACK_SECRET_KEY=sk_test_mock            (any sk_test_ value works with the local mock)
+#   PAYSTACK_BASE_URL=http://127.0.0.1:4010
+
+# 3. Schema + menu
+npm run migrate
+npm run seed
+
+# 4. Two terminals
+npm run mock:paystack      # terminal A — fake Paystack with a checkout page on :4010
+npm run dev                # terminal B — API on :3000 + the bot polling Telegram
+```
+
+Open your bot's `t.me/...` link, send `/start`, order "2 jollof and 1 chicken", share a location
+(anywhere near UNIBEN, e.g. 6.40, 5.61 — Zone A), tap **Pay**. The mock checkout page opens; tap
+**Pay** there and Telegram receives "Payment received". Kitchen steps can be driven from the API
+(`POST /internal/v1/orders/{id}/transition`) until the admin bot lands in phase 5.
+
+**Real Paystack test mode:** set `PAYSTACK_SECRET_KEY=sk_test_…` from your Paystack dashboard and
+`PAYSTACK_BASE_URL=https://api.paystack.co`. Webhooks need a public URL: run a tunnel
+(`cloudflared tunnel --url http://localhost:3000` or `ngrok http 3000`) and set the webhook URL in
+the Paystack dashboard to `https://<tunnel>/webhooks/paystack`. Even without the webhook, the
+reconciliation sweep (phase 7) and the "verify" endpoint settle payments.
+
+**Webhook mode for Telegram (production):** `TELEGRAM_MODE=webhook`, `PUBLIC_BASE_URL=https://…`,
+`TELEGRAM_WEBHOOK_SECRET=<random>`. The path is derived from the token and never logged. Use a
+separate staging bot pair (two more BotFather bots) for staging.
+
 ## npm scripts
 
-| Script         | What it does                                                   |
-| -------------- | -------------------------------------------------------------- |
-| `dev`          | start server + workers with hot reload (`tsx watch`)           |
-| `build`        | compile to `dist/`                                             |
-| `start`        | run compiled server                                            |
-| `test`         | run unit and integration tests (Vitest)                        |
-| `lint`         | ESLint + Prettier check                                        |
-| `typecheck`    | `tsc --noEmit`                                                 |
-| `migrate`      | apply pending SQL migrations                                   |
-| `seed`         | load realistic Nigerian menu seed data                         |
-| `verify`       | typecheck + lint + secret scan + tests, prints PASS/FAIL table |
-| `secrets:scan` | secretlint over the whole tree                                 |
+| Script          | What it does                                                       |
+| --------------- | ------------------------------------------------------------------ |
+| `dev`           | start server + workers with hot reload (`tsx watch`)               |
+| `build`         | compile to `dist/`                                                 |
+| `start`         | run compiled server                                                |
+| `test`          | run unit and integration tests (Vitest)                            |
+| `lint`          | ESLint + Prettier check                                            |
+| `typecheck`     | `tsc --noEmit`                                                     |
+| `migrate`       | apply pending SQL migrations                                       |
+| `seed`          | load realistic Nigerian menu seed data                             |
+| `verify`        | typecheck + lint + secret scan + tests, prints PASS/FAIL table     |
+| `mock:paystack` | local Paystack look-alike with a checkout page and signed webhooks |
+| `secrets:scan`  | secretlint over the whole tree                                     |
 
 ## Database connections
 

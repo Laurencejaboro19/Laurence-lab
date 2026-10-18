@@ -6,6 +6,15 @@ branch in the branch plan (see README). Format follows Keep a Changelog; dates a
 ## [Unreleased]
 
 ### Added
+- Phase 4: Telegram customer bot (client with rate limiting, adapter, polling + webhook modes),
+  channel-neutral conversation engine in English and Pidgin (onboarding, menu, text ordering, cart,
+  checkout with pins/typed addresses, Paystack button, tracking, reorder, privacy commands), customer
+  notifications on status changes, real Paystack gateway + local mock server + signed webhook route
+  with background processing and replay sweep. `npm run mock:paystack`.
+
+## [0.1.0-core] — 2026-10-17
+
+### Added
 - Phase 3: pure domain (kobo money, order state machine as data, pricing, zones, text order parser),
   ports and pg repositories, services (settings, customers, catalog, cart, orders, payments),
   transactional in-process event bus, mock Paystack gateway, Fastify internal API v1 with signed
