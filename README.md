@@ -4,8 +4,10 @@ Chat-based food ordering platform for **Laurence Lab**, Benin City, Nigeria. Cus
 pay (Paystack), track delivery and get support entirely inside Telegram and WhatsApp. Staff run the
 business through a separate Telegram admin bot. There is no web front end.
 
-> **Status:** `v0.1.0-core` merged; phase 4 (Telegram customer bot + Paystack test mode) on `feat/telegram-customer`. See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains
-> and `docs/` for architecture, decisions and owner reports as they land.
+> **Status:** phases 1–4 merged and **live on Vercel since 2026-10-21** (@LaurencelabBot, Supabase
+> London, Paystack test mode). Owner guide for the hosted setup: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
+> See [CHANGELOG.md](CHANGELOG.md) for what each tagged release contains and `docs/` for
+> architecture, decisions and owner reports.
 
 ## Stack
 

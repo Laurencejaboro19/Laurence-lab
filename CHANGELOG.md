@@ -3,11 +3,26 @@
 All notable changes to this project are recorded here. Each tagged release corresponds to a merged
 branch in the branch plan (see README). Format follows Keep a Changelog; dates are UTC.
 
-## [Unreleased]
+## [0.3.0-live-pilot] — 2026-10-21
+
+First real run: @LaurencelabBot live on Vercel + Supabase (London) with Paystack test mode.
 
 ### Added
 - Vercel serverless entry (webhook mode, inline background work, request-driven maintenance,
-  `/setup/*` bootstrap routes, daily cron), `vercel.json`, `docs/DEPLOY_VERCEL.md`, DR-012.
+  `/setup/*` bootstrap routes, daily cron), `vercel.json`, DR-012.
+- `docs/DEPLOY_VERCEL.md`: the click-by-click owner guide as it was actually done (Supabase,
+  Vercel, Paystack), with the troubleshooting table from the first run.
+- `DATABASE_SSL_CA` (optional) for full TLS verification against Supabase's root CA.
+- `api/index.js` reports start-up failures as JSON instead of Vercel's opaque 500.
+
+### Changed
+- Swagger UI is loaded lazily and off on Vercel (`docsUi` option) — its `@fastify/static`
+  dependency cannot load on Node 24 there; `/internal/v1/openapi.json` is unchanged.
+- Migration 0008: audit hash chain uses core `sha256()` instead of pgcrypto `digest()`
+  (Supabase keeps pgcrypto in the `extensions` schema, off the runtime role's search path).
+  Hashes are identical, existing chains still verify.
+- Tests: `FakeClock` defaults to the next open Tuesday after the real date so age-based sweeps
+  (reconcile, replay) stay valid as calendar time passes.
 
 ## [0.2.0-telegram-customer] — 2026-10-18
 

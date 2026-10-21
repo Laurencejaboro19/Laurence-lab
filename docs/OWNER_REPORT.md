@@ -4,6 +4,40 @@ Plain-language status after each phase. Newest first.
 
 ---
 
+## Go-live — the bot is running (2026-10-21)
+
+**State:** @LaurencelabBot is live on Vercel against the Supabase project `laurence-lab-prod`
+(London, Free plan) with Paystack in **test mode**. `/setup` reports
+`database: reachable · telegram: configured · paystack: paystack`; 8 migrations applied; menu,
+zones, settings and FAQ seeded; Telegram webhook installed. All services are on free plans.
+
+**What the first real run found and fixed** (each one is a commit on `main`; details in
+`docs/DEPLOY_VERCEL.md` §6):
+
+| Found                                                                                                                    | Fix                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Every request died with Vercel's opaque `FUNCTION_INVOCATION_FAILED`                                                     | `api/index.js` now reports the start-up error as JSON so the owner can read the cause         |
+| A Swagger-UI dependency (`content-disposition` 3, ESM-only) cannot load on Node 24                                       | Swagger UI is loaded lazily and switched off on Vercel; `/internal/v1/openapi.json` unchanged |
+| Supabase's TLS chain is signed by its own CA ("self-signed certificate in chain")                                        | `sslFor()`: encrypted without verification until `DATABASE_SSL_CA` is set (launch item)       |
+| Every bot message failed: audit trigger called pgcrypto `digest()`, which Supabase keeps in a schema off the search path | Migration 0008: core `sha256()`, identical hashes, no extension                               |
+| Test clock pinned to a past date made two age-based sweeps blind after 2026-10-20                                        | `FakeClock` defaults to the next open Tuesday after the real date                             |
+
+`npm run verify` → **PASS**, 792 tests.
+
+**Done by the owner (free accounts):** Supabase organisation + project + roles; Paystack account,
+test key and webhook URL; the four `/setup/*` clicks.
+
+**Still owner-side before real customers** (`docs/DEPLOY_VERCEL.md` §5): rotate both bot tokens,
+the three database passwords and `INTERNAL_API_SECRET` (all were pasted in chat during setup); set
+`DATABASE_SSL_CA`; complete Paystack Compliance for live keys; make the repository private; push
+the git tags.
+
+**Not yet verified live:** a full order with a Paystack test-card payment and the
+"Payment received" push. The code path is covered by tests against the mock; the first real
+checkout is the owner's next click.
+
+---
+
 ## Deployment — Vercel pilot hosting (merged to `main` 2026-10-18)
 
 **Decision:** the owner asked for the bot to run on his existing Vercel project
