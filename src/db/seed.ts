@@ -448,7 +448,11 @@ async function main(): Promise<void> {
   if (env.NODE_ENV === 'production' && process.argv[2] !== '--i-know-this-is-production') {
     throw new Error('Refusing to seed production without --i-know-this-is-production');
   }
-  const client = new Client({ connectionString: env.DATABASE_URL_DIRECT });
+  const { sslFor } = await import('./client.js');
+  const client = new Client({
+    connectionString: env.DATABASE_URL_DIRECT,
+    ssl: sslFor(env.DATABASE_URL_DIRECT),
+  });
   await client.connect();
   try {
     await seed(client, (l) => process.stdout.write(`${l}\n`));

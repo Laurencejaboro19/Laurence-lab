@@ -121,7 +121,7 @@ run('payment settlement edge cases', () => {
     expect(
       w.events.ofType('payment.flagged').some((e) => e.orderId === orderId && e.kind === 'late'),
     ).toBe(true);
-    w.clock.current = new Date('2026-10-20T11:00:00Z');
+    w.clock.reset();
   });
 
   it('unknown references are flagged, not ignored', async () => {
@@ -141,7 +141,7 @@ run('payment settlement edge cases', () => {
     const r = await w.core.payments.reconcilePending(2);
     expect(r.outcomes['paid']).toBeGreaterThanOrEqual(1);
     expect(await status(orderId)).toBe('PAID');
-    w.clock.current = new Date('2026-10-20T11:00:00Z');
+    w.clock.reset();
   });
 
   it('rejecting a paid order queues exactly one full refund, then the gateway is called once', async () => {

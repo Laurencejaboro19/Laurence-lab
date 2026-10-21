@@ -125,11 +125,11 @@ run('checkout and the money path', () => {
       code: 'MINIMUM_ORDER',
     });
 
-    w.clock.current = new Date('2026-10-20T23:30:00Z'); // 00:30 Lagos — closed
+    w.clock.closed();
     await expect(w.core.orders.checkout(c.actor, c.id, 'telegram')).rejects.toMatchObject({
       code: 'STORE_CLOSED',
     });
-    w.clock.current = new Date('2026-10-20T11:00:00Z');
+    w.clock.reset();
 
     await w.core.uow.transaction((tx) => w.core.settings.set(tx, 'store.open', false, OWNER));
     await expect(w.core.orders.checkout(c.actor, c.id, 'telegram')).rejects.toMatchObject({
@@ -221,6 +221,6 @@ run('checkout and the money path', () => {
     expect(order!.status).toBe('EXPIRED');
     const after = await w.core.uow.transaction((tx) => w.core.repos.menu.findItem(tx, moi.id));
     expect(after!.available).toBe(before.available);
-    w.clock.current = new Date('2026-10-20T11:00:00Z');
+    w.clock.reset();
   });
 });

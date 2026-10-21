@@ -209,10 +209,10 @@ run('conversation engine — customer journey', () => {
     await send(tap('parsed:yes'));
     await send(tap('checkout'));
     await send(tap('ful:pickup'));
-    w.clock.current = new Date('2026-10-20T23:30:00Z');
+    w.clock.closed();
     const closed = await send(tap('pay:confirm'));
     expect(texts(closed)).toMatch(/closed right now/);
-    w.clock.current = new Date('2026-10-20T11:00:00Z');
+    w.clock.reset();
     expect(w.events.ofType('order.payment_initialised').length).toBeGreaterThanOrEqual(1);
   });
 

@@ -39,9 +39,30 @@ export function createPool(
     statement_timeout: 15_000,
     application_name: 'laurence-lab-bot',
   };
-  // Supabase pooler endpoints require TLS; local Postgres does not offer it.
-  if (/supabase\.(co|com)/.test(connectionString)) config.ssl = { rejectUnauthorized: true };
+  const ssl = sslFor(connectionString);
+  if (ssl) config.ssl = ssl;
   return new pg.Pool(config);
+}
+
+/**
+ * TLS settings for a connection string. Supabase endpoints require TLS, and their
+ * certificate chain is signed by Supabase's own CA, which Node does not trust by
+ * default ("self-signed certificate in certificate chain"). Two modes:
+ *
+ *   - `DATABASE_SSL_CA` set (PEM text of Supabase's root certificate, downloadable
+ *     from Project Settings → Database → SSL): full verification against that CA.
+ *   - otherwise: encrypted, but the server certificate is not verified. The
+ *     password still travels encrypted; what is lost is protection against a
+ *     DNS/route hijack of the pooler hostname. Pinning the CA is a launch item
+ *     (docs/DEPLOY_VERCEL.md §5).
+ *
+ * Local Postgres offers no TLS, so anything that is not Supabase gets none.
+ */
+export function sslFor(connectionString: string): PoolConfig['ssl'] | undefined {
+  if (!/supabase\.(co|com)/.test(connectionString)) return undefined;
+  const ca = process.env['DATABASE_SSL_CA'];
+  if (ca?.includes('BEGIN CERTIFICATE')) return { ca, rejectUnauthorized: true };
+  return { rejectUnauthorized: false };
 }
 
 export interface TxHooks {

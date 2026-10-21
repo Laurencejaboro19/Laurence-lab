@@ -32,7 +32,7 @@ import { loadEnv, type Env } from '../config/env.js';
 import { ConversationEngine } from '../core/conversation/engine.js';
 import { createCore, type Core } from '../core/index.js';
 import { InMemoryEventBus } from '../core/events/in-memory.js';
-import { createPool, PgUnitOfWork } from '../db/client.js';
+import { createPool, PgUnitOfWork, sslFor } from '../db/client.js';
 import { runMigrations } from '../db/migrate.js';
 import { createRepositories } from '../db/repositories/index.js';
 import { seed } from '../db/seed.js';
@@ -179,7 +179,7 @@ async function build(env: Env): Promise<FastifyInstance> {
     const url = env.DATABASE_URL_MIGRATE ?? env.DATABASE_URL_DIRECT;
     const client = new Client({
       connectionString: url,
-      ssl: /supabase\.(co|com)/.test(url) ? { rejectUnauthorized: true } : undefined,
+      ssl: sslFor(url),
     });
     await client.connect();
     try {
@@ -196,7 +196,7 @@ async function build(env: Env): Promise<FastifyInstance> {
     const url = env.DATABASE_URL_DIRECT;
     const client = new Client({
       connectionString: url,
-      ssl: /supabase\.(co|com)/.test(url) ? { rejectUnauthorized: true } : undefined,
+      ssl: sslFor(url),
     });
     await client.connect();
     try {

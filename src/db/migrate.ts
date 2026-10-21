@@ -163,7 +163,8 @@ async function main(): Promise<void> {
   const { loadEnv } = await import('../config/env.js');
   const env = loadEnv();
   const url = env.DATABASE_URL_MIGRATE ?? env.DATABASE_URL_DIRECT;
-  const client = new Client({ connectionString: url });
+  const { sslFor } = await import('./client.js');
+  const client = new Client({ connectionString: url, ssl: sslFor(url) });
   await client.connect();
   try {
     const command = process.argv[2] ?? 'up';

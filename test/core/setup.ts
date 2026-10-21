@@ -10,13 +10,43 @@ import { seed } from '../../src/db/seed.js';
 import { MockPaymentGateway } from '../../src/providers/payments/mock-gateway.js';
 import { resetDatabase, TEST_MIGRATE_URL, TEST_RUNTIME_URL } from '../db/helpers.js';
 
+/**
+ * The next Tuesday 12:00 Lagos (11:00Z) strictly after the real "now".
+ *
+ * Why the future: the services take time from the Clock, but the database stamps
+ * `created_at` with its own now(). Sweeps such as "payments initialised more than
+ * N minutes ago" compare the two, so the fake clock must never sit *behind* the
+ * real one — a fixed past date silently broke those tests the day after it.
+ * Why Tuesday noon: the seeded opening hours are open then, and the "closed"
+ * cases add 12h30 to land on 00:30 Lagos.
+ */
+export function nextOpenTuesday(from = new Date()): Date {
+  const d = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate(), 11));
+  do d.setUTCDate(d.getUTCDate() + 1);
+  while (d.getUTCDay() !== 2 || d.getTime() <= from.getTime());
+  return d;
+}
+
 export class FakeClock implements Clock {
-  constructor(public current: Date = new Date('2026-10-20T11:00:00Z')) {} // Tuesday 12:00 Lagos — open
+  readonly base: Date;
+  current: Date;
+  constructor(base: Date = nextOpenTuesday()) {
+    this.base = base;
+    this.current = new Date(base);
+  }
   now(): Date {
     return new Date(this.current);
   }
   advance(ms: number): void {
     this.current = new Date(this.current.getTime() + ms);
+  }
+  /** Back to the open Tuesday noon. */
+  reset(): void {
+    this.current = new Date(this.base);
+  }
+  /** 00:30 Lagos the following night — outside opening hours. */
+  closed(): void {
+    this.current = new Date(this.base.getTime() + 12.5 * 3_600_000);
   }
 }
 

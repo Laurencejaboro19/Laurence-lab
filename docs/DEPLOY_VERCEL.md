@@ -76,6 +76,11 @@ Paystack's docs; no real money moves in test mode.
   `SUPABASE_URL=… SUPABASE_ANON_KEY=… node scripts/check-anon-lockdown.mjs`.
 - Vercel Hobby runs the daily cron at 03:00 UTC; day-to-day maintenance runs on request traffic
   (DR-012).
+- **Database TLS.** Supabase's certificate chain is signed by Supabase's own CA, which Node does
+  not trust out of the box, so the app encrypts the connection but does not verify the server
+  certificate until `DATABASE_SSL_CA` is set. Launch item: Supabase → Project Settings →
+  Database → **SSL** → download the certificate, paste its PEM text into a Vercel variable
+  named `DATABASE_SSL_CA`, redeploy. Verification then switches on automatically.
 
 ## 6. Troubleshooting
 
