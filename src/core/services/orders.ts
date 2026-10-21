@@ -200,7 +200,12 @@ export class OrderService {
         entityId: order.id,
         after: { ref: order.publicRef, totalKobo: order.totalKobo, items: order.items.length },
       });
-      return { order, expiresAt, email: customerEmail(customerId, customer.phoneE164) };
+      const emailDomain = await this.settings.get(tx, 'payments.customer_email_domain');
+      return {
+        order,
+        expiresAt,
+        email: customerEmail(customerId, customer.phoneE164, emailDomain),
+      };
     });
 
     // --- network call, outside any transaction ---
@@ -578,8 +583,15 @@ export class OrderService {
 }
 
 /** Paystack requires an email; customers have phones. A stable synthetic address per customer. */
-function customerEmail(customerId: string, phone: string | null): string {
-  return `${phone ?? customerId}@customers.laurencelab.invalid`;
+/**
+ * Paystack requires an e-mail per transaction; customers here identify by phone. The
+ * local part is the E.164 number without '+' (Paystack rejects some punctuation), the
+ * domain is a setting. '.invalid' (RFC 2606) was rejected by the live API, so the
+ * default is a real, owner-controlled hostname that simply has no mailboxes.
+ */
+export function customerEmail(customerId: string, phone: string | null, domain: string): string {
+  const local = (phone ?? customerId).replace(/[^A-Za-z0-9._-]/g, '');
+  return `${local}@${domain}`;
 }
 
 /** Midnight in Africa/Lagos (UTC+1, no DST) expressed as a UTC instant. */

@@ -39,6 +39,10 @@ export const SETTING_SCHEMAS = {
   'orders.max_quantity_per_line': z.number().int().min(1).max(50),
   'payments.provider': z.enum(['paystack']),
   'payments.enabled': z.boolean(),
+  /** Domain for the synthetic customer e-mail Paystack requires (phone-first, no real mailbox). */
+  'payments.customer_email_domain': z
+    .string()
+    .regex(/^[a-z0-9.-]+\.[a-z]{2,}$/i, 'must look like a domain, e.g. customers.example.com'),
   'delivery.provider': z.enum(['manual', 'kwik', 'mock']),
   'delivery.enabled': z.boolean(),
   'delivery.pickup_enabled': z.boolean(),
@@ -80,6 +84,7 @@ export const SETTING_DEFAULTS: { [K in SettingKey]: SettingValue<K> } = {
   'orders.max_quantity_per_line': 20,
   'payments.provider': 'paystack',
   'payments.enabled': true,
+  'payments.customer_email_domain': 'customers.laurence-lab-bot.vercel.app',
   'delivery.provider': 'manual',
   'delivery.enabled': true,
   'delivery.pickup_enabled': true,

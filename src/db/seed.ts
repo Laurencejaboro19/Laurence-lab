@@ -277,6 +277,7 @@ const SETTINGS: Record<string, unknown> = {
   'orders.max_quantity_per_line': 20,
   'payments.provider': 'paystack',
   'payments.enabled': true,
+  'payments.customer_email_domain': 'customers.laurence-lab-bot.vercel.app',
   'delivery.provider': 'manual',
   'delivery.enabled': true,
   'delivery.pickup_enabled': true,

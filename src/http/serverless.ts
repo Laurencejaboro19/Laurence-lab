@@ -30,6 +30,8 @@ import { ChannelDispatcher } from '../channels/dispatcher.js';
 import { CustomerNotifier } from '../channels/notifications.js';
 import { loadEnv, type Env } from '../config/env.js';
 import { ConversationEngine } from '../core/conversation/engine.js';
+import { kobo } from '../core/domain/money.js';
+import { customerEmail } from '../core/services/orders.js';
 import { createCore, type Core } from '../core/index.js';
 import { InMemoryEventBus } from '../core/events/in-memory.js';
 import { createPool, PgUnitOfWork, sslFor } from '../db/client.js';
@@ -215,6 +217,32 @@ async function build(env: Env): Promise<FastifyInstance> {
     await installWebhook(telegram, env.PUBLIC_BASE_URL, telegramPath, env.TELEGRAM_WEBHOOK_SECRET);
     const me = await telegram.getMe();
     return { webhook: 'installed', bot: `https://t.me/${me.username ?? ''}` };
+  });
+
+  // Asks Paystack to create a ₦100 checkout the same way a real order does and shows the
+  // raw answer. Nothing is charged unless someone pays on the returned page.
+  app.get('/setup/paystack', async (req, reply) => {
+    if (!guard(req.query)) return reply.status(401).send({ error: 'bad key' });
+    const domain = await core.uow.transaction((tx) =>
+      core.settings.get(tx, 'payments.customer_email_domain'),
+    );
+    const email = customerEmail('setup-check', '+2340000000000', domain);
+    try {
+      const init = await gateway.initialise({
+        reference: `SETUP-${Date.now()}`,
+        amountKobo: kobo(10_000),
+        email,
+        metadata: { purpose: 'setup-check' },
+      });
+      return { paystack: gateway.name, email, ok: true, checkoutPage: init.authorizationUrl };
+    } catch (err) {
+      return reply.status(502).send({
+        paystack: gateway.name,
+        email,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   });
 
   app.get('/jobs/daily', async (req, reply) => {

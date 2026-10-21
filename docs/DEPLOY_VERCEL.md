@@ -100,12 +100,13 @@ Things we learned the hard way:
 The setup key is derived from `INTERNAL_API_SECRET` (`npm run setup-key` prints it locally with
 the same secret in `.env`). Open these in order; each returns a short JSON line:
 
-| #   | URL                                                        | Expect                                                      |
-| --- | ---------------------------------------------------------- | ----------------------------------------------------------- |
-| 1   | `https://laurence-lab-bot.vercel.app/setup?key=…`          | `"database":"reachable","paystack":"paystack"`              |
-| 2   | `https://laurence-lab-bot.vercel.app/setup/migrate?key=…`  | `"applied":[…]` first time, then `alreadyUpToDate`          |
-| 3   | `https://laurence-lab-bot.vercel.app/setup/seed?key=…`     | `"seeded":["category Rice: 3 items", …]`                    |
-| 4   | `https://laurence-lab-bot.vercel.app/setup/telegram?key=…` | `"webhook":"installed","bot":"https://t.me/LaurencelabBot"` |
+| #   | URL                                                        | Expect                                                                                   |
+| --- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | `https://laurence-lab-bot.vercel.app/setup?key=…`          | `"database":"reachable","paystack":"paystack"`                                           |
+| 2   | `https://laurence-lab-bot.vercel.app/setup/migrate?key=…`  | `"applied":[…]` first time, then `alreadyUpToDate`                                       |
+| 3   | `https://laurence-lab-bot.vercel.app/setup/seed?key=…`     | `"seeded":["category Rice: 3 items", …]`                                                 |
+| 4   | `https://laurence-lab-bot.vercel.app/setup/telegram?key=…` | `"webhook":"installed","bot":"https://t.me/LaurencelabBot"`                              |
+| 5   | `https://laurence-lab-bot.vercel.app/setup/paystack?key=…` | `"ok":true,"checkoutPage":"https://checkout.paystack.com/…"` — or Paystack's exact error |
 
 Re-run 2 after every release that adds a migration (the response says what it applied). 3 and 4
 are safe to repeat; the seed keeps existing values.
