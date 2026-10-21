@@ -90,6 +90,10 @@ Paystack's docs; no real money moves in test mode.
   the cause is never hidden behind Vercel's generic `FUNCTION_INVOCATION_FAILED` screen.
 - **`/setup` says `database: error: …`** — the connection string is wrong or the Supabase
   project is paused. Check the three `DATABASE_URL*` values (§2) and the project status.
+- **The bot answers every message with "Something went wrong on our side"** — a write to the
+  database is failing. Open `/setup/migrate?key=…` to make sure every migration is applied (the
+  first live run hit exactly this: pgcrypto lives in Supabase's `extensions` schema, fixed by
+  migration 0008), then check the Vercel runtime logs for the SQL error.
 - **`/setup/telegram` returns 400** — `TELEGRAM_CUSTOMER_BOT_TOKEN` or
   `TELEGRAM_WEBHOOK_SECRET` is not set on the deployment.
 - **Variables edited but nothing changes** — environment variables apply only to deployments
