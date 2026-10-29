@@ -1,0 +1,302 @@
+[
+ {
+  "id": "a143ce0d-8989-5398-9499-04458595d075",
+  "name": "Rice",
+  "sortOrder": 1,
+  "active": true,
+  "items": [
+   {
+    "id": "02312e25-e43b-5010-b405-f6249a1b2bc0",
+    "categoryId": "a143ce0d-8989-5398-9499-04458595d075",
+    "slug": "jollof-rice",
+    "name": "Jollof Rice",
+    "description": "Smoky party-style jollof, served with a slice of plantain.",
+    "priceKobo": 150000,
+    "photoRef": "\ud83c\udf5b",
+    "prepMinutes": 20,
+    "aliases": [],
+    "active": true,
+    "variants": [
+     {
+      "id": "ef8155a5-1e19-5745-8c92-f4fefc66537b",
+      "name": "Regular",
+      "priceDeltaKobo": 0,
+      "active": true
+     },
+     {
+      "id": "490a77af-f131-5fa7-a76c-da1cd9419cb3",
+      "name": "Large",
+      "priceDeltaKobo": 50000,
+      "active": true
+     }
+    ],
+    "addons": [
+     {
+      "id": "37b7a899-fca5-516d-9ad2-484956184520",
+      "name": "Extra plantain",
+      "priceKobo": 30000,
+      "active": true
+     },
+     {
+      "id": "d1c59672-c73c-5b8d-9f50-151956b4b58f",
+      "name": "Coleslaw",
+      "priceKobo": 40000,
+      "active": true
+     }
+    ],
+    "available": null
+   },
+   {
+    "id": "8b79667b-8a96-510f-aa81-9f48257e1e4c",
+    "categoryId": "a143ce0d-8989-5398-9499-04458595d075",
+    "slug": "fried-rice",
+    "name": "Fried Rice",
+    "description": "Vegetable fried rice with liver bits.",
+    "priceKobo": 160000,
+    "photoRef": "\ud83c\udf5a",
+    "prepMinutes": 20,
+    "aliases": [],
+    "active": true,
+    "variants": [
+     {
+      "id": "0ef38aaf-859d-551e-aff6-f60eb8314eca",
+      "name": "Regular",
+      "priceDeltaKobo": 0,
+      "active": true
+     },
+     {
+      "id": "846c102e-b241-5d12-8329-955f18e43c5b",
+      "name": "Large",
+      "priceDeltaKobo": 50000,
+      "active": true
+     }
+    ],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "11b2ba3f-c81e-5c98-919c-bbd0c9626b17",
+    "categoryId": "a143ce0d-8989-5398-9499-04458595d075",
+    "slug": "white-rice-stew",
+    "name": "White Rice & Stew",
+    "description": "Steamed white rice with tomato stew.",
+    "priceKobo": 130000,
+    "photoRef": "\ud83c\udf72",
+    "prepMinutes": 15,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   }
+  ]
+ },
+ {
+  "id": "eb9fee6a-c296-5935-bfac-76edab7cdbf8",
+  "name": "Proteins",
+  "sortOrder": 2,
+  "active": true,
+  "items": [
+   {
+    "id": "9e64cacf-a4bd-5106-9868-b5f1275efff6",
+    "categoryId": "eb9fee6a-c296-5935-bfac-76edab7cdbf8",
+    "slug": "chicken",
+    "name": "Chicken",
+    "description": "Peppered chicken, one piece.",
+    "priceKobo": 250000,
+    "photoRef": "\ud83c\udf57",
+    "prepMinutes": 10,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "8c6cde82-95db-5b4b-967d-7b1bf7216c9c",
+    "categoryId": "eb9fee6a-c296-5935-bfac-76edab7cdbf8",
+    "slug": "turkey",
+    "name": "Turkey",
+    "description": "Peppered turkey, one piece.",
+    "priceKobo": 300000,
+    "photoRef": "\ud83e\udd83",
+    "prepMinutes": 10,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "2de9ebbc-646f-5478-9534-8b2f8dff1bc8",
+    "categoryId": "eb9fee6a-c296-5935-bfac-76edab7cdbf8",
+    "slug": "fish",
+    "name": "Fried Fish",
+    "description": "Fried titus fish, one piece.",
+    "priceKobo": 200000,
+    "photoRef": "\ud83d\udc1f",
+    "prepMinutes": 10,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "608ba4cd-450e-5d86-9b57-72eb368c2131",
+    "categoryId": "eb9fee6a-c296-5935-bfac-76edab7cdbf8",
+    "slug": "boiled-egg",
+    "name": "Boiled Egg",
+    "description": "One boiled egg.",
+    "priceKobo": 30000,
+    "photoRef": "\ud83c\udf7d\ufe0f",
+    "prepMinutes": 5,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   }
+  ]
+ },
+ {
+  "id": "6477ceab-c292-5d57-bffc-cbad7968456c",
+  "name": "Sides",
+  "sortOrder": 3,
+  "active": true,
+  "items": [
+   {
+    "id": "0728e2c2-b4f7-5886-9a00-924add15a147",
+    "categoryId": "6477ceab-c292-5d57-bffc-cbad7968456c",
+    "slug": "fried-plantain",
+    "name": "Fried Plantain",
+    "description": "Sweet ripe plantain, one portion.",
+    "priceKobo": 80000,
+    "photoRef": "\ud83c\udf7d\ufe0f",
+    "prepMinutes": 10,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "7f2b1a66-0f12-5b86-ac8d-8d26cb23f9a1",
+    "categoryId": "6477ceab-c292-5d57-bffc-cbad7968456c",
+    "slug": "moi-moi",
+    "name": "Moi Moi",
+    "description": "Steamed bean pudding with egg.",
+    "priceKobo": 70000,
+    "photoRef": "\ud83e\uded8",
+    "prepMinutes": 5,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "4ecb60e7-410f-5f84-a74a-aa927216dbda",
+    "categoryId": "6477ceab-c292-5d57-bffc-cbad7968456c",
+    "slug": "coleslaw",
+    "name": "Coleslaw",
+    "description": "Fresh cabbage and carrot salad.",
+    "priceKobo": 50000,
+    "photoRef": "\ud83e\udd57",
+    "prepMinutes": 5,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   }
+  ]
+ },
+ {
+  "id": "e8dffd37-75ab-5ef3-8de2-393a88531109",
+  "name": "Drinks",
+  "sortOrder": 4,
+  "active": true,
+  "items": [
+   {
+    "id": "ed98b54c-c85c-55c5-a108-d56841641da1",
+    "categoryId": "e8dffd37-75ab-5ef3-8de2-393a88531109",
+    "slug": "chivita",
+    "name": "Chivita Juice (1L)",
+    "description": "Chivita Active or Exotic, 1 litre.",
+    "priceKobo": 180000,
+    "photoRef": "\ud83e\uddc3",
+    "prepMinutes": 0,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "c1d32a41-33df-5ed8-83cb-f6e98067b5dc",
+    "categoryId": "e8dffd37-75ab-5ef3-8de2-393a88531109",
+    "slug": "bottled-water",
+    "name": "Bottled Water",
+    "description": "75cl table water.",
+    "priceKobo": 30000,
+    "photoRef": "\ud83c\udf7d\ufe0f",
+    "prepMinutes": 0,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "c81f00cd-37ff-5a9c-bb7c-2738998413ae",
+    "categoryId": "e8dffd37-75ab-5ef3-8de2-393a88531109",
+    "slug": "soft-drink",
+    "name": "Soft Drink (50cl)",
+    "description": "Coke, Fanta or Sprite, 50cl PET.",
+    "priceKobo": 50000,
+    "photoRef": "\ud83e\udd64",
+    "prepMinutes": 0,
+    "aliases": [],
+    "active": true,
+    "variants": [
+     {
+      "id": "e0b1fdd9-0ab5-5e66-bd91-deedc0d4db94",
+      "name": "Coke",
+      "priceDeltaKobo": 0,
+      "active": true
+     },
+     {
+      "id": "34a32f73-759b-5e20-9dc0-dbac0afb3889",
+      "name": "Fanta",
+      "priceDeltaKobo": 0,
+      "active": true
+     },
+     {
+      "id": "5d4228ab-184b-5588-bff5-9b08f1440237",
+      "name": "Sprite",
+      "priceDeltaKobo": 0,
+      "active": true
+     }
+    ],
+    "addons": [],
+    "available": null
+   },
+   {
+    "id": "f2dc0d3f-6c96-53ce-bd59-3a0363773c33",
+    "categoryId": "e8dffd37-75ab-5ef3-8de2-393a88531109",
+    "slug": "malt",
+    "name": "Malt Drink",
+    "description": "Maltina or Amstel Malta, 33cl.",
+    "priceKobo": 70000,
+    "photoRef": "\ud83c\udf7a",
+    "prepMinutes": 0,
+    "aliases": [],
+    "active": true,
+    "variants": [],
+    "addons": [],
+    "available": null
+   }
+  ]
+ }
+]
