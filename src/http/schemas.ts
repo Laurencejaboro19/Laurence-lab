@@ -19,7 +19,7 @@ export const ErrorResponse = z.object({
   }),
 });
 
-export const Channel = z.enum(['telegram', 'whatsapp']);
+export const Channel = z.enum(['telegram', 'whatsapp', 'app']);
 export const Language = z.enum(['en', 'pcm']);
 export const OrderStatusSchema = z.enum(ORDER_STATUSES);
 export const StaffRole = z.enum(['owner', 'manager', 'kitchen', 'dispatch', 'support']);

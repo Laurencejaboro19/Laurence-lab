@@ -2,6 +2,7 @@
  * Fastify app factory. `buildServer()` returns an app that tests can drive with
  * `app.inject()` and `main.ts` listens on. No business logic lives here.
  */
+import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
@@ -28,6 +29,7 @@ import {
   idempotencyPlugin,
   requestIdPlugin,
 } from './plugins.js';
+import { paystackReturnPage, registerAppV1 } from './routes/app/v1/index.js';
 import { registerInternalV1 } from './routes/internal/v1/index.js';
 import { registerPaystackWebhook } from './routes/webhooks/paystack.js';
 
@@ -45,6 +47,13 @@ export interface ServerOptions {
   backgroundMode?: BackgroundMode;
   /** Serve the Swagger UI at /internal/v1/docs (default true; off on serverless hosts). */
   docsUi?: boolean;
+  /** Mobile app API (`/app/v1`). Off when undefined (tests that do not need it). */
+  mobileApp?: {
+    publicBaseUrl: string;
+    paystackPublicKey?: string;
+    /** Custom URL scheme the Paystack return page deep-links back to. */
+    deepLinkScheme?: string;
+  };
 }
 
 declare module 'fastify' {
@@ -193,6 +202,32 @@ export async function buildServer(opts: ServerOptions): Promise<FastifyInstance>
       routePrefix: '/internal/v1/docs',
       uiConfig: { docExpansion: 'list' },
     });
+  }
+
+  // --- mobile app API v1 -------------------------------------------------------
+  if (opts.mobileApp) {
+    const mobile = opts.mobileApp;
+    await app.register(
+      async (v1) => {
+        // The web build of the app (demo/PWA) runs on another origin; native builds
+        // send no Origin header. Tokens, not cookies, carry identity, so '*' is safe.
+        await v1.register(cors, {
+          origin: true,
+          methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+          allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Request-Id'],
+          maxAge: 86400,
+        });
+        registerAppV1(v1, {
+          internalApiSecret: opts.internalApiSecret,
+          publicBaseUrl: mobile.publicBaseUrl,
+          ...(mobile.paystackPublicKey ? { paystackPublicKey: mobile.paystackPublicKey } : {}),
+        });
+      },
+      { prefix: '/app/v1' },
+    );
+    app.get('/app/pay/return', (_req, reply) =>
+      reply.type('text/html').send(paystackReturnPage(mobile.deepLinkScheme ?? 'laurencelab')),
+    );
   }
 
   // --- provider webhooks -----------------------------------------------------

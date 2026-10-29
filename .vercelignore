@@ -5,3 +5,6 @@ coverage
 .husky
 *.md
 !docs/DEPLOY_VERCEL.md
+
+# Native mobile app lives in its own package; the API deploy does not need it.
+mobile/

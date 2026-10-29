@@ -88,7 +88,12 @@ export class OrderService {
   // Checkout
   // -------------------------------------------------------------------------
 
-  async checkout(actor: Actor, customerId: string, channel: Channel): Promise<CheckoutResult> {
+  async checkout(
+    actor: Actor,
+    customerId: string,
+    channel: Channel,
+    opts: { callbackUrl?: string } = {},
+  ): Promise<CheckoutResult> {
     if (actor.type === 'customer' && actor.id !== customerId) throw forbidden('not your cart');
 
     const placed = await this.uow.transaction(async (tx) => {
@@ -221,6 +226,7 @@ export class OrderService {
           order_ref: placed.order.publicRef,
           customer_id: customerId,
         },
+        ...(opts.callbackUrl ? { callbackUrl: opts.callbackUrl } : {}),
       });
     } catch (err) {
       await this.uow.transaction(async (tx) => {

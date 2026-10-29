@@ -28,6 +28,11 @@ export interface TokenClaims {
   client: string;
   staffId?: string;
   staffRole?: StaffRole;
+  /**
+   * Adapter tokens handed to an untrusted client (the mobile app) are pinned to
+   * one customer: the X-Customer-Id header is ignored and this id is used instead.
+   */
+  customerId?: string;
   /** Unix seconds. */
   exp: number;
 }
@@ -72,9 +77,11 @@ export function actorFrom(
   requestId: string,
 ): Actor | null {
   switch (claims.kind) {
-    case 'adapter':
-      if (!customerIdHeader) return null;
-      return { type: 'customer', id: customerIdHeader, requestId };
+    case 'adapter': {
+      const id = claims.customerId ?? customerIdHeader;
+      if (!id) return null;
+      return { type: 'customer', id, requestId };
+    }
     case 'staff':
       return {
         type: 'staff',

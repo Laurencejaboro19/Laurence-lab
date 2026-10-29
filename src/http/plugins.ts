@@ -109,12 +109,21 @@ export const errorHandlerPlugin = fp((app: FastifyInstance, _opts, done) => {
 // ---------------------------------------------------------------------------
 // Auth: bearer token → claims → actor. Applied to everything under /internal.
 // ---------------------------------------------------------------------------
+const APP_PUBLIC = /^\/app\/v1\/(session|menu|zones|config)(\?|$)/;
+
 export const authPlugin = fp((app: FastifyInstance, opts: { secret: string }, done) => {
   app.decorateRequest('claims');
   app.decorateRequest('actor');
   app.decorateRequest('actorKey', '');
   app.addHook('onRequest', (req, reply, next) => {
-    if (!req.url.startsWith('/internal/')) {
+    const isInternal = req.url.startsWith('/internal/');
+    const isApp = req.url.startsWith('/app/v1/');
+    if (!isInternal && !isApp) {
+      next();
+      return;
+    }
+    // Mobile app: a few routes are public (session bootstrap, menu, zones, config).
+    if (isApp && APP_PUBLIC.test(req.url)) {
       next();
       return;
     }

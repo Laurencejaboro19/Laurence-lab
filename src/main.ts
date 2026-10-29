@@ -56,6 +56,10 @@ async function main(): Promise<void> {
     prettyLogs: env.NODE_ENV === 'development',
     trustProxy: env.NODE_ENV === 'production',
     enforcePaystackIps: env.NODE_ENV === 'production',
+    mobileApp: {
+      publicBaseUrl: env.PUBLIC_BASE_URL,
+      ...(env.PAYSTACK_PUBLIC_KEY ? { paystackPublicKey: env.PAYSTACK_PUBLIC_KEY } : {}),
+    },
   });
 
   // --- channels ---------------------------------------------------------------

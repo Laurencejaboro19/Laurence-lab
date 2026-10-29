@@ -9,7 +9,7 @@
  * for something it cannot deliver. See docs/ARCHITECTURE.md §3.
  */
 
-export type Channel = 'telegram' | 'whatsapp';
+export type Channel = 'telegram' | 'whatsapp' | 'app';
 
 /** Who sent the event, in platform-neutral terms. */
 export interface ChannelIdentity {

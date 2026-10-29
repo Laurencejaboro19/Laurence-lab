@@ -2,7 +2,7 @@
   "name": "laurence-lab-bot",
   "version": "0.0.1",
   "private": true,
-  "description": "Laurence Lab Bot \u2014 chat-based food ordering platform for Telegram and WhatsApp (Nigeria).",
+  "description": "Laurence Lab Bot — chat-based food ordering platform for Telegram and WhatsApp (Nigeria).",
   "type": "module",
   "engines": {
     "node": ">=22.12"
@@ -43,6 +43,7 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
+    "@fastify/cors": "11.3.1",
     "@fastify/helmet": "13.2.0",
     "@fastify/rate-limit": "11.2.1",
     "@fastify/sensible": "6.0.7",

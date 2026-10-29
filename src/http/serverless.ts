@@ -108,6 +108,10 @@ async function build(env: Env): Promise<FastifyInstance> {
     enforcePaystackIps: env.NODE_ENV === 'production',
     backgroundMode: 'inline',
     docsUi: false, // see server.ts: @fastify/static cannot load on Vercel's Node 24
+    mobileApp: {
+      publicBaseUrl: env.PUBLIC_BASE_URL,
+      ...(env.PAYSTACK_PUBLIC_KEY ? { paystackPublicKey: env.PAYSTACK_PUBLIC_KEY } : {}),
+    },
   });
 
   const brand = await core.uow
