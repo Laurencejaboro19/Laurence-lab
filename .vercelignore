@@ -6,5 +6,6 @@ coverage
 *.md
 !docs/DEPLOY_VERCEL.md
 
-# Native mobile app lives in its own package; the API deploy does not need it.
-mobile/
+# mobile/ is NOT listed here: the root .vercelignore applies to every project built from this
+# repo, and the web-demo project (root directory: mobile) needs the folder. Its node_modules and
+# dist are never committed, so the API deploy only uploads sources.
