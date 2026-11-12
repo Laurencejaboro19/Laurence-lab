@@ -1,0 +1,20 @@
+# systemd unit. Copy to /etc/systemd/system/sextant.service, adjust User and paths, then:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now sextant
+[Unit]
+Description=Sextant research bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=sextant
+WorkingDirectory=/opt/sextant
+EnvironmentFile=/opt/sextant/.env
+ExecStart=/opt/sextant/.venv/bin/python -m sextant
+Restart=always
+RestartSec=10
+# SIGTERM lets the bot hand unfinished research back to the queue before exiting.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

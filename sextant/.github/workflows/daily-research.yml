@@ -1,0 +1,62 @@
+# OPTIONAL. Free daily research without a server or a paid cron service.
+#
+# Runs `python -m sextant.oneshot`: one research task, delivered to Telegram, then exit.
+# It is idempotent per calendar day (DEFAULT_TIMEZONE), so manual re-runs and GitHub
+# retries never produce a second report for the same date.
+#
+# Setup: repository Settings -> Secrets and variables -> Actions
+#   Secrets:   TELEGRAM_BOT_TOKEN, ALLOWED_USER_IDS, GEMINI_API_KEY (and any other keys you use)
+#   Variables: SCHEDULE_OBJECTIVE (what to research every day), optional SCHEDULE_CONTEXT
+# Nothing runs until SCHEDULE_OBJECTIVE is set.
+#
+# Know the limits: GitHub starts scheduled jobs late when it is busy (often 5-30 minutes),
+# so this is "around 5 AM", not exactly 5:00. The schedule below is 03:53 UTC = 04:53 in
+# Lagos (UTC+1, no daylight saving) to absorb the usual delay. Keep the repository
+# private: workflow logs of public repositories are public.
+name: Daily research
+on:
+  schedule:
+    - cron: "53 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: daily-research
+  cancel-in-progress: false
+
+jobs:
+  research:
+    if: ${{ vars.SCHEDULE_OBJECTIVE != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      # The SQLite database (history, dedup records, caches) travels between runs in the Actions cache.
+      - uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: sextant-data-${{ github.run_id }}
+          restore-keys: sextant-data-
+      - run: python -m sextant.oneshot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ALLOWED_USER_IDS: ${{ secrets.ALLOWED_USER_IDS }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          SCHEDULE_OBJECTIVE: ${{ vars.SCHEDULE_OBJECTIVE }}
+          SCHEDULE_CONTEXT: ${{ vars.SCHEDULE_CONTEXT }}
+          DEFAULT_TIMEZONE: ${{ vars.DEFAULT_TIMEZONE || 'Africa/Lagos' }}
+          RESEARCH_DEPTH: ${{ vars.RESEARCH_DEPTH || 'standard' }}
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data
+          key: sextant-data-${{ github.run_id }}
